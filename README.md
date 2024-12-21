@@ -1,2 +1,2 @@
 # MLTools
-Simple machine learning models implemented in python
+Simple machine learning models implemented in python.
