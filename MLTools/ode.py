@@ -2,19 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class ODE:
-    '''
-    General ODE solver with RK4
-    '''
     def integrate(self, x, tStart, tEnd, dt):
         # number of time steps
-        maxit = np.ceil((tEnd - tStart) / dt).astype('int')
+        maxIt = np.ceil((tEnd - tStart) / dt).astype('int')
         
         # allocate storage
-        X = np.zeros((maxit, x.size))
-        T = np.zeros((maxit, 1))
+        X = np.zeros((maxIt, x.size))
         
         # time integration
-        T = np.arange(maxit) * (tEnd - tStart) + tStart
+        T = tStart + np.arange(maxIt) * dt
         for i, t in enumerate(T):
             X[i] = x
             x += self.RK4(x, t, dt)
@@ -29,33 +25,36 @@ class ODE:
         k4 = self.rhs(x + dt*k3, t + dt)
         return dt * (k1 + 2.0*k2 + 2.0*k3 + k4) / 6.0
 
+class FreeFall(ODE):
+    ''' 
+    Free fall of point mass under constant gravity
+    '''
+    def __init__(self, pi):
+        self.pi = pi 
+        
+    def run(self, x, dt):
+        t = 0
+        while x[0] > 0:
+            t += dt
+            x += self.RK4(x, t, dt)
+        
+        # return falling time
+        return t
+        
+    def rhs(self, x, t):
+        y = np.roll(x, -1)
+        y[-1] = -self.pi
+        return y
+
 class Pendulum(ODE):
     '''
     Pendulum class of ODE. Must implement the function rhs for RK4
     '''
     def __init__(self, b, m, l, g):
-        self.c0_ = -g/l
-        self.c1_ = -b/m
+        self.c0 = -g/l
+        self.c1 = -b/m
 
     def rhs(self, x, t):
-        y = x.copy()
-        y[0] = x[1]
-        y[1] = self.c0_ * np.sin(x[0]) + self.c1_ * x[1]
+        y = np.roll(x, -1)
+        y[-1] = self.c0 * np.sin(x[0]) + self.c1 * x[1]
         return y
-    
-
-if __name__ == '__main__':
-    # problem definition 
-    b, m, l, g = 0.1, 0.25, 2.5, 9.81
-    ode = Pendulum(b, m, l, g)
-    
-    # initial solution
-    x = np.array([1.0, 1.0])
-    
-    # time solution
-    ts, te, dt = 0., 10., 0.1
-    T, X = ode.integrate(x, ts, te, dt)
-    
-    # plot angle
-    plt.plot(T, X[:,0])
-    plt.show()
