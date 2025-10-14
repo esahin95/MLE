@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 class ODE:
     def integrate(self, x, tStart, tEnd, dt):
