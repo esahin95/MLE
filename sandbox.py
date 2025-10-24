@@ -219,9 +219,148 @@ def run03e():
     plt.scatter(X, model(X), facecolors='none', edgecolors='r')
     plt.show()
 
+def run04():
+    ''' 
+    Run code for exercise 04. Implement regularization into linear model.
+    Parameter identification in ODEs.
+    '''
+    
+    # pendulum
+    b, m, l, g = 0.1, 0.25, 2.5, 9.81
+    ode = Pendulum(b, m, l, g)
+    
+    # generate dataset
+    rng = np.random.default_rng(0)
+    X = rng.uniform(-1, 1, size=(2000,2)) * [np.pi, 10.0*np.sqrt(l/g)]
+    Y = np.array([ode.rhs(x, 0.)[1:2] for x in X]) + 0.1 * rng.normal(size=(X.shape[0], 1))
+    X = np.hstack((X, np.sin(X), np.cos(X)))
+    X = np.power(X[...,np.newaxis],np.arange(1,4)).reshape(X.shape[0],-1)
+    
+    # build model
+    model = RidgeRegression(X.shape[-1])
+    model.fit(X[:1000], Y[:1000], lam=1.)
+    
+    # post process
+    YPred = model(X[1000:])
+    plt.scatter(Y[1000:],YPred)
+
+def run05():
+    ''' 
+    Naive Bayes
+    '''
+    pass
+    
+def run06():
+    ''' 
+    Support Vector Regression
+    '''
+    pass
+    
+def run07():
+    ''' 
+    Artificial Neural Networks
+    '''
+    
+    # ground truth
+    rng = np.random.default_rng(0)
+    base = MLP([2,2,2], seed=42)
+    X = rng.random((250,2))
+    Y = base(X)
+    
+    # structured mesh
+    U,V = np.meshgrid(np.linspace(0,1,50), np.linspace(0,1,50))
+    P = np.hstack((U.reshape(-1,1), V.reshape(-1,1)))
+    W = base(P)
+    
+    # fit neural network
+    model = MLP([2,2,2], seed=659)
+    L = model.fit(X, Y, lr=0.01, bs=X.shape[0], epochs=100000)
+    YP = model(X)
+    WP = model(P)
+    
+    # plot 
+    fig, axs = plt.subplots(1,2,figsize=(10,5), subplot_kw={'projection':'3d'})
+    for i in range(Y.shape[-1]):
+        # training data
+        axs[i].scatter(X[:,0:1], X[:,1:2], Y[:,i:i+1], c='b', s=1)
+        axs[i].scatter(X[:,0:1], X[:,1:2], YP[:,i:i+1], c='r', s=1)
+        
+        # structured surface plot
+        axs[i].plot_surface(U, V, W[:,i].reshape(U.shape), color='b', alpha=0.2)
+        axs[i].plot_surface(U, V, WP[:,i].reshape(U.shape), color='r', alpha=0.2)
+    plt.show()
+    
+    # training loss
+    fig, ax = plt.subplots(1,1)
+    ax.semilogy(L[0:])
+    plt.show()
+    
+def run08():
+    ''' 
+    Use pytorch for image classification
+    '''
+    pass
+
+def run09a():
+    ''' 
+    Clustering (k-Means)
+    '''
+    # load data
+    X = np.loadtxt('./Data/clusters.dat')
+    
+    # build model
+    model = KMeans()
+    k = 3
+    model.fit(X,k)
+    
+    # post process
+    centers = model(X)
+    for i in range(k):
+        I = (centers == i).reshape(-1)
+        plt.scatter(X[I,0], X[I,1], c=f'C{i}', alpha=0.5)
+        plt.scatter(model._centroids[i][0], model._centroids[i][1], c='k', alpha=1.0)
+    plt.show()
+    
+def run09b():
+    ''' 
+    factorization (PCA)
+    '''
+    # load data
+    X = np.loadtxt('./Data/pca.dat', delimiter=',')
+    
+    # build model
+    model = PCA()
+    model.fit(X)
+    
+    # post process
+    fig, axs = plt.subplots(16,16,figsize=(10,10),subplot_kw={'xticks':[], 'yticks':[]},gridspec_kw={'hspace': 0, 'wspace': 0})
+    for i, ax in enumerate(axs.flat):
+        ax.imshow(model[i][1].reshape(16,16), cmap = 'gray')
+    plt.tight_layout()
+    plt.show()
+    
+def run10():
+    ''' 
+    Independent Component Analysis
+    '''
+    # load data
+    X = np.loadtxt('./Data/ica.dat', delimiter=',')
+    
+    # build model
+    model = ICA()
+    model.fit(X, lr=5e-4, bs=100, epochs=10)
+    
+    # post process    
+    fig, axs = plt.subplots(16,16,figsize=(10,10),subplot_kw={'xticks':[], 'yticks':[]},gridspec_kw={'hspace': 0, 'wspace': 0})
+    for i, ax in enumerate(axs.flat):
+        ax.imshow(model[i].reshape(16,16), cmap = 'gray')
+    plt.tight_layout()
+    plt.show()
+    
 
 if __name__ == "__main__":
     #run01()
     #run02()
-    run02e()
+    #run02e()
     #run03()
+    run10()

@@ -28,8 +28,8 @@ class FreeFall(ODE):
     ''' 
     Free fall of point mass under constant gravity
     '''
-    def __init__(self, pi):
-        self.pi = pi 
+    def __init__(self, g):
+        self.g = g 
         
     def run(self, x, dt):
         t = 0
@@ -42,7 +42,7 @@ class FreeFall(ODE):
         
     def rhs(self, x, t):
         y = np.roll(x, -1)
-        y[-1] = -self.pi
+        y[-1] = -self.g
         return y
 
 class Pendulum(ODE):

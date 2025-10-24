@@ -25,18 +25,10 @@ class Perceptron(Linear):
         
         # optimize objective
         for epoch in range(epochs):
-            miss = 0
             for xi, yi in zip(X, y):
-                # perceptron learning rule
-                yxi = yi * xi
-                if yxi @ self.weights <= 0:
-                    self.weights.flat += alp * yxi
-                    miss += 1
-            print(miss / X.shape[0], end=' ')
-                    
-        # normalization
+                if (yi * xi) @ self.weights <= 0:
+                    self.weights.flat += (alp * yi) * xi
         self.weights /= np.linalg.norm(self.weights, np.inf) 
-        print()
                 
     def __call__(self, X):
         # return sign of linear transformation as label
@@ -77,7 +69,6 @@ class LogisticRegression(Linear):
             
             # training progress
             if epoch % (epochs // 5) == 0:
-                # loss
                 print(-np.sum(np.log(h)))
         
     def __call__(self, X):
