@@ -4,6 +4,7 @@ Simple machine learning models implemented in python for the course Machine Lear
 ## Implemented models
     - Linear predictors: Linear Regression, Halfspace Classifier, RidgeRegression
     - Linear predictors with nonlinear transformation: Logistic Regression, Multivariate Logistic Regression
+    - Support Vector Machines
     - Feed-Forward Neural Networks (MLP), sigmoid activation and SGD optimizer
     - Principal Component Analysis (PCA)
     - Independent Component Analysis (ICA)
