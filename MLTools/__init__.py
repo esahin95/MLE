@@ -9,11 +9,13 @@ Created on Fri Dec 13 09:41:57 2024
 from MLTools.dataset import DataCollection
 from MLTools.linearModels import LinearRegression, LogisticRegression, Perceptron, MultinomialLogisticRegression, RidgeRegression
 from MLTools.neuralNetworks import MLP
-from MLTools.ode import FreeFall, Pendulum
+from MLTools.ode import FreeFall, Pendulum, PopDynamics
 from MLTools.MCMC import MCMC
 from MLTools.cluster import KMeans
 from MLTools.factorization import PCA
 from MLTools.probabilistic import NaiveBayes, NaiveBayesMixed, ICA
+from MLTools.optim import NealderMead
+from MLTools.svm import SVC
 
 # visible classes in external applications
 __all__ = [
@@ -25,11 +27,14 @@ __all__ = [
     "RidgeRegression",
     "Pendulum",
     "FreeFall",
+    "PopDynamics",
     "MLP",
     "MCMC",
     "KMeans",
     "PCA",
     "NaiveBayes",
     "NaiveBayesMixed",
-    "ICA"
+    "ICA",
+    "NealderMead",
+    "SVC"
 ]

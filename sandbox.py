@@ -8,6 +8,16 @@ Created on Wed Oct  8 09:33:25 2025
 import numpy as np
 import matplotlib.pyplot as plt
 from MLTools import *
+import time 
+
+def timeit(f):
+    def timed(*args, **kwargs):
+        ts = time.time()
+        rs = f(*args, **kwargs)
+        te = time.time()
+        print(f'func:{f.__name__!r} took: {te-ts:.6e} s')
+        return rs
+    return timed
 
 def run01():
     ''' 
@@ -49,7 +59,7 @@ def run01():
     tPred = np.sqrt(h / g) * model(x.reshape(1,1))
     print(tTrue, tPred)
    
-
+@timeit
 def run02():
     ''' 
     Run code for exercise 02. Metropolis algorithm to sample the posterior 
@@ -78,98 +88,93 @@ def run02():
     def f(x):
         return like(x) * prior(x)
     
+    # hyper parameters
+    sigma = 1.0e-1
+    lag = 1 
+    burnin = 100
+    nSample = 20000
+    
     # build Markov chain
-    mcmc = MCMC()
-    D = mcmc.run(0.5, f, 10000, 100, 1, 0.1)    
+    mc = MCMC(0.5, sigma)
+    
+    # burnin period
+    for _ in range(burnin):
+        mc.step(f)
+    
+    # collect samples
+    D = np.zeros(nSample)
+    nAccept = 0
+    for i in range(nSample):
+        for j in range(lag):
+            nAccept += mc.step(f)
+        D[i] = mc.state
+    print(f'Acceptance probability: {nAccept/(nSample*lag):.4f}') 
     
     # postprocessing
-    fig, axs = plt.subplots(1,2)
+    fig, axs = plt.subplots(1,2,figsize=(12,4))
     axs[0].hist(D, density=True)
     Z = np.linspace(0,1,1000)
     axs[0].plot(Z, beta.pdf(Z, 2, 2), 'b')
     axs[0].plot(Z, beta.pdf(Z, 2+h, 2+n-h), 'r')
     axs[1].plot(D, range(len(D)))
-    plt.show()
+    plt.savefig('Results/coins.pdf', bbox_inches='tight')
+    #plt.show()
     
-
+@timeit
 def run02e():
     ''' 
     Run code for Ising model. Magnetization in thermal Equilibrium
-    '''
-    
-    # imports
-    from scipy.ndimage import convolve, generate_binary_structure
-    
+    '''    
     # mesh
     N = 50
     
     # initial state
-    init_random = np.random.random((N,N))
-    lat = np.zeros((N,N))
-    lat[init_random>=0.75] = 1 
-    lat[init_random<0.75] = -1 
-    plt.imshow(lat)
+    rng = np.random.default_rng(0)
+    L = np.ones((N,N))
+    L[rng.random((N,N))<0.75] = -1 
+    plt.imshow(L)
     plt.show()
     
     # total energy
-    kern = generate_binary_structure(2,1)
-    kern[1][1] = False
-    def get_energy(lattice):
-        arr = -lattice * convolve(lattice, kern, mode='constant')
-        return arr.sum() / 2.0
+    def energy(L):
+        return np.sum(- L * (np.roll(L,1,axis=0) + np.roll(L,1,axis=1)))
     
-    #def metropolis(lat, times, BJ, energy):
     # params
-    times = 200000
-    BJ = 0.7
+    times = 1000000
+    BJ = 0.1
         
     # run metropolis
-    net_spins = np.zeros(times-1)
-    net_energy = np.zeros(times-1)
-    energy = get_energy(lat)
-    for t in range(0, times-1):
+    M = np.repeat(L.sum(), times)
+    E = np.repeat(energy(L), times)
+    for t in range(1, times):
         # random index
-        x = np.random.randint(0, N)
-        y = np.random.randint(0, N)
-        
-        # propose new spin
-        si = lat[x,y]
-        sf = -1 * si 
+        x = rng.integers(N)
+        y = rng.integers(N)
         
         # compute energy change
-        Ei = 0 
-        Ef = 0
-        if x > 0:
-            Ei += -si * lat[x-1,y]
-            Ef += -sf * lat[x-1,y]
-        if x < N-1:
-            Ei += -si * lat[x+1,y]
-            Ef += -sf * lat[x+1,y]
-        if y > 0:
-            Ei += -si * lat[x,y-1]
-            Ef += -sf * lat[x,y-1]
-        if y < N-1:
-            Ei += -si * lat[x,y+1]
-            Ef += -sf * lat[x,y+1]
-        dE = Ef-Ei
+        Ei = -L[x,y] * (L[(x+1) % N, y] + L[(x-1) % N, y] + L[x, (y+1) % N] + L[x, (y-1) % N])
+        dE = -2.0 * Ei
         
         # change state
+        E[t] = E[t-1]
+        M[t] = M[t-1]
         if np.random.random() < min(1, np.exp(-BJ*dE)):
-            lat[x,y] = sf 
-            energy += dE
-        
-        net_spins[t] = lat.sum()
-        net_energy[t] = energy
+            L[x,y] *= -1  
+            E[t]   += dE
+            M[t]   += L[x,y] * 2
         
     # postprocessing
-    fig, axs = plt.subplots(1,2)
-    axs[0].plot(net_energy)
-    axs[1].plot(net_spins / N**2)
+    print(f'Magnetization: {M[times//2:].mean()/N**2}, Energy: {E[times//2:].mean()}')
+    fig, axs = plt.subplots(1,3)
+    axs[0].plot(E)
+    axs[1].plot(M / N**2)
+    axs[2].imshow(L)
+    plt.show()
 
     
 def run03():
     ''' 
-    Run code for exercise 02. Predict part failure for given temperature. 
+    Run code for exercise 03. Predict part failure for given temperature. 
     Test Perceptron and logistic regression model. Perceptron fails, since 
     data is not linearly seperable
     '''
@@ -202,21 +207,29 @@ def run03():
 
 def run03e():
     '''
-    Additional content for exercise 02. Multi-class classification problem
+    Additional content for exercise 03. Multi-class classification problem
     with multinomial logistic regression
     '''
     # generate synthetic dataset
     rng = np.random.default_rng(0)
-    X = rng.normal(size=(10,1))
+    X = rng.uniform(-1.5,1.5,size=(10,1))
     y = ((X>0.5) * 2 + (X<-0.5) * 1).astype(np.int32)
     
     # build model
     model = MultinomialLogisticRegression(1, 3)
-    model.fit(X, y, alp=1.0, epochs=100)
+    model.fit(X, y, alp=1.0, epochs=1000)
     
     # post processing
     plt.scatter(X,y)
     plt.scatter(X, model(X), facecolors='none', edgecolors='r')
+    
+    # test inputs
+    X = rng.uniform(-2,2,size=(1000,1))
+    y = ((X>0.5) * 2 + (X<-0.5) * 1).astype(np.int32)
+    plt.scatter(X, y, s=1, facecolors='k')
+    plt.scatter(X, model(X), s=1, facecolors='none', edgecolors='y')
+    
+    
     plt.show()
 
 def run04():
@@ -243,24 +256,121 @@ def run04():
     # post process
     YPred = model(X[1000:])
     plt.scatter(Y[1000:],YPred)
+    
+def run04e():
+    ''' 
+    Some extras for exercise 04. Implement the Nealder Mead simplex method and 
+    use it for parameter identification in population dynamics.
+    '''
+    class Base:
+        def __init__(self):
+            self._nEval = 0
+            
+    class F(Base):
+        def __call__(self, x):
+            self._nEval += 1
+            return 100.0 * (x[1] - x[0]**2)**2 + (1.0 - x[0])**2
+    
+    class G(Base):
+        def __init__(self, ode, dt, T, X):
+            super().__init__()
+            self._ode = ode 
+            self._dt = dt
+            self._T = T 
+            self._X = X
+            
+        def __call__(self, x):
+            self._nEval += 1
+            X = self._ode.run(x, self._dt, self._T)
+            return np.sum((X - self._X)**2)
+    
+    # test Nealder-Mead
+    opt = NealderMead()
+    opt(F(), np.array([-1.9,2.0]), eps=1e-10)
+    
+    # establish ground truth
+    r, K, b = 3.0, 15.0, 2.0
+    xTrue = np.array([3.0, 15.0, 2.0])
+    T = np.linspace(0.5, 5.0, 10)
+    X = b / (b/K + (1 - b/K) * np.exp(-r*T)) 
+    
+    # parameter identification
+    x = opt(G(PopDynamics(), 1e-1, T, X), np.array([5.0, 5.0, 5.0]), eps=1e-8)
+    
+    # test the solution
+    ode = PopDynamics()
+    T = np.linspace(0.0, 5.0, 100)
+    X = ode.run(x, 1e-1, T)
+    Y = b / (b/K + (1 - b/K) * np.exp(-r*T)) 
+    plt.plot(T, X)
+    plt.plot(T, Y, '--')
+    plt.show()
 
 def run05():
     ''' 
-    Naive Bayes
+    Run code for exercise 05. Naive Bayes and a mixed version with real features
+    for medical diagnosis.
     '''
-    pass
+    # load dataset
+    ds = np.loadtxt('Data/diagnosis.csv')
+    X = ds[:,1:6].astype(np.int8)
+    Y = ds[:,6:7].astype(np.int8)
+    
+    # training test split
+    rng = np.random.default_rng(45)
+    idx = rng.permutation(len(X))
+    nTest = int(len(X) * 0.2)
+    Xtest, Ytest, Xtrain, Ytrain = X[idx[:nTest]], Y[idx[:nTest]], X[idx[nTest:]], Y[idx[nTest:]]
+    
+    # train model
+    model = NaiveBayes()
+    model.fit(Xtrain,Ytrain)
+    print(model.confusion(Xtest, Ytest))
+    
+    Xcar = ds[:,0:1]
+    Xcartest, Xcartrain = Xcar[idx[:nTest]], Xcar[idx[nTest:]]
+    
+    model = NaiveBayesMixed()
+    model.fit((Xtrain, Xcartrain),Ytrain)
+    print(model.confusion((Xtest, Xcartest), Ytest))
     
 def run06():
     ''' 
-    Support Vector Regression
+    Support Vector Classification
     '''
-    pass
+    # generate random data
+    rng = np.random.default_rng(10)
+    X = rng.uniform(-1,1,size=(120,2))
+    
+    w = np.array([0.2,0.4])
+    b = 0.1
+    y = np.sign(X @ w + b).reshape(-1,1)
+    
+    # train model
+    model = SVC(0.2)
+    model.fit(X, y, C=50, tol=1e-4, maxPasses=5)
+    
+    # prediction
+    Xt,Yt = np.meshgrid(np.linspace(-1,1,100), np.linspace(-1,1,100))
+    Pt = np.vstack((Xt.flat, Yt.flat)).T
+    
+    yPred = np.sign(model(Pt))
+    plt.scatter(Pt[yPred.flat>0][:,0], Pt[yPred.flat>0][:,1], color='y')
+    plt.scatter(Pt[yPred.flat<0][:,0], Pt[yPred.flat<0][:,1], color='g')
+    
+    # training data
+    plt.scatter(X[y.flat>0][:,0], X[y.flat>0][:,1], color='r')
+    plt.scatter(X[y.flat<0][:,0], X[y.flat<0][:,1], color='b')
+    
+    # solution
+    x = np.linspace(-1,1,2)
+    plt.plot(x, -(b + w[0]*x)/w[1], 'k')
+    plt.show()
     
 def run07():
     ''' 
     Artificial Neural Networks
-    '''
-    
+    ''' 
     # ground truth
     rng = np.random.default_rng(0)
     base = MLP([2,2,2], seed=42)
@@ -360,7 +470,7 @@ def run10():
 
 if __name__ == "__main__":
     #run01()
-    #run02()
+    run02()
     #run02e()
     #run03()
-    run10()
+    #run06()
