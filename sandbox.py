@@ -6,6 +6,7 @@ Created on Wed Oct  8 09:33:25 2025
 """
 
 import numpy as np
+import scipy as sp
 import matplotlib.pyplot as plt
 from MLTools import *
 from timeit import default_timer
@@ -376,6 +377,207 @@ def run04e():
     plt.plot(T, Y, '--')
     plt.show()
 
+def ps02():
+    ''' 
+    Code for assignment 02. Implements the log barrier method to solve optimization
+    with linear inequality constraints    
+    '''
+    # packages
+    
+    
+    # implement models
+    class Lasso:            
+        def step(self, X, Y, i):
+            # eliminate coordinate for step
+            self._w[i] = 0
+            
+            # partial cost
+            cost = X @ self._w - Y
+            
+            # possible weights
+            Xi = X[:,i]
+            wp = max(0, (np.inner(cost, -Xi) - self._lam) / np.inner(Xi, Xi))
+            wn = min(0, (np.inner(cost, -Xi) + self._lam) / np.inner(Xi, Xi))
+            
+            # update weight
+            Jp = 0.5 * np.inner(wp*Xi + cost, wp*Xi + cost) + self._lam * wp
+            Jn = 0.5 * np.inner(wn*Xi + cost, wn*Xi + cost) - self._lam * wn
+            if Jn < Jp:
+                self._w[i] = wn
+            else:
+                self._w[i] = wp
+            
+        @timeit
+        def optimize(self, X, y, lam=1.0):
+            # initialize
+            self._lam = lam
+            self._w = np.ones(X.shape[-1])
+            
+            # sequential optimization
+            for epoch in range(30):
+                for j in range(X.shape[-1]):
+                    self.step(X, y, j)
+                
+                # current cost
+                c = y - X@self._w
+                J = 0.5 * np.inner(c,c) + self._lam * np.linalg.norm(self._w, 1)
+                print(J)
+            
+    class LogBarrierBase:
+        @timeit
+        def optimize(self, X, y, lam=1.0, epochs=50, maxIter=50):
+            n = X.shape[-1]
+            
+            # loss
+            def L(d):
+                p = s + d
+                q = B @ p
+                if np.any(q >= 0):
+                    res = np.inf
+                else:
+                    res = 0.5 * np.sum(p.T @ H @ p) + np.sum(b * p) - mu * np.sum(np.log(-q))
+                return res
+            
+            # initialize matrices
+            I = np.eye(n)
+            A = np.block([X, np.zeros_like(X)])
+            B = np.block([[I, -I], [-I, -I]])
+            H = A.T @ A
+            c = np.vstack((np.zeros((n,1)), np.ones((n,1))))
+            b = lam * c - A.T @ y
+            
+            # initialize solution
+            s0 = c.copy()
+            mu = 1.0
+            
+            # optimization
+            for epoch in range(epochs):                
+                # solution of subproblem
+                alp = 1.0
+                s = s0.copy()
+                for i in range(maxIter):
+                    # constraints
+                    x = B @ s
+                    
+                    # gradient
+                    gradL = H @ s + b - mu * B.T @ (1.0/x)
+                    
+                    # Hessian
+                    HL = H + mu * B.T @ ((x**-2) * B)
+                    
+                    # step 
+                    d = np.linalg.solve(HL, -gradL)
+                    
+                    # line search
+                    k0, k1 = L(0), 0.01 * np.sum(gradL * d)
+                    while L(alp * d) > k0 + k1 * alp:
+                        alp *= 0.5 
+                        if alp < 1e-5:
+                            raise Exception('alpha too small')
+                    d *= alp 
+                    alp = min(1.0, 1.2*alp)
+
+                    # termination condition
+                    s += d
+                    if np.linalg.norm(d, np.inf) < 1e-4:
+                        print(f'terminated at iteration {i} with alpha {alp} and residual {L(0)}')
+                        break
+                
+                # termination condition
+                if np.linalg.norm(s-s0, np.inf) < 1e-3:
+                    #print(s[:n].T)
+                    break
+                
+                # update
+                mu *= 0.5 
+                s0 = s  
+                
+    class LogBarrier:
+        @timeit
+        def optimize(self, X, y, lam=1.0, epochs=50, maxIter=50):
+            n = X.shape[-1]
+            
+            # loss
+            def L(d):
+                pw, pt = w + d[:n], t + d[n:]
+                if np.any(pw-pt >= 0) or np.any(-pw-pt >= 0):
+                    return np.inf 
+                else:
+                    Xw = X @ pw
+                    return 0.5 * np.sum(Xw**2) - np.sum(y * Xw) + lam * np.sum(pt) - mu * np.sum(np.log(pt**2 - pw**2))
+            
+            # initialize matrices
+            H = X.T @ X
+            b = lam * np.ones((n,1))
+            
+            # initialize solution
+            w0, t0 = np.zeros((n,1)), np.ones((n,1))
+            mu = 1.0
+            
+            # optimization
+            for epoch in range(epochs):                
+                # solution of subproblem
+                alp = 1.0
+                w, t = w0.copy(), t0.copy()
+                for i in range(maxIter):
+                    # constraints
+                    c1 = 1/(w + t)
+                    c2 = 1/(w - t)
+                    
+                    # gradient
+                    gradL = np.vstack((
+                        H @ w - X.T @ y - mu * (c1 + c2), 
+                        b - mu * (c1 - c2)
+                    ))
+                    
+                    # Hessian
+                    HLt = mu * np.diagflat(c1**2 + c2**2)
+                    HLn = mu * np.diagflat(c1**2 - c2**2)
+                    HL = np.block([[H+HLt, HLn], [HLn.T, HLt]])
+                    
+                    # step 
+                    d = np.linalg.solve(HL, -gradL)
+                    
+                    # line search
+                    k0, k1 = L(np.zeros_like(d)), 0.01 * np.sum(gradL * d)
+                    while L(alp * d) > k0 + k1 * alp:
+                        alp *= 0.5 
+                        if alp < 1e-5:
+                            raise Exception('alpha too small')
+                    d *= alp
+                    alp = min(1.0, 1.2*alp)
+
+                    # termination condition
+                    w += d[:n]
+                    t += d[n:]
+                    if np.linalg.norm(d, np.inf) < 1e-4:
+                        print(f'terminated at iteration {i} with alpha {alp} and residual {L(np.zeros_like(d))}')
+                        break
+                
+                # termination condition
+                if max(np.linalg.norm(w-w0,np.inf), np.linalg.norm(t-t0,np.inf)) < 1e-3:
+                    #print(s[:n].T)
+                    break
+                
+                # update
+                mu *= 0.5 
+                w0, t0 = w, t
+                    
+    # load data
+    data = DataCollection()
+    data.load('Data/lasso.npz')
+    #print(data.w)
+    
+    # optimization
+    lasso = Lasso()
+    lasso.optimize(data.X, data.y, lam=1.0)
+    
+    logB = LogBarrierBase()
+    logB.optimize(data.X, data.y.reshape(-1,1), lam=1.0, epochs=50, maxIter=50)
+    
+    logB = LogBarrier()
+    logB.optimize(data.X, data.y.reshape(-1,1), lam=1.0, epochs=50, maxIter=50)
+
 def run05():
     ''' 
     Run code for exercise 05. Naive Bayes and a mixed version with real features
@@ -545,4 +747,4 @@ if __name__ == "__main__":
     #run03()
     #run06()
     
-    ps01()
+    ps02()
