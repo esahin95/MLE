@@ -8,13 +8,13 @@ Created on Wed Oct  8 09:33:25 2025
 import numpy as np
 import matplotlib.pyplot as plt
 from MLTools import *
-import time 
+from timeit import default_timer
 
 def timeit(f):
     def timed(*args, **kwargs):
-        ts = time.time()
+        ts = default_timer()
         rs = f(*args, **kwargs)
-        te = time.time()
+        te = default_timer()
         print(f'func:{f.__name__!r} took: {te-ts:.6e} s')
         return rs
     return timed
@@ -72,17 +72,21 @@ def run02():
     
     # data
     p = 0.3 
-    n = 20
-    X = rng.random(n) < p
+    m = 5
+    X = rng.random(m) < p
     
     # prior probability density
-    def prior(x, a=2, b=2):
-        return x**(a-2) * (1-x)**(b-2)
+    a, b = 2, 2
+    def prior(x):
+        if x >= 1.0 or x <= 0.0:
+            return 0.0 * x
+        else:
+            return x**(a-1) * (1-x)**(b-1)
     
     # likelihood
     h = np.sum(X)
     def like(x):
-        return x**h * (1-x)**(n-h)
+        return x**h * (1-x)**(m-h)
     
     # stationary distribution
     def f(x):
@@ -112,13 +116,13 @@ def run02():
     
     # postprocessing
     fig, axs = plt.subplots(1,2,figsize=(12,4))
-    axs[0].hist(D, density=True)
+    axs[0].hist(D, bins=50, density=True)
     Z = np.linspace(0,1,1000)
     axs[0].plot(Z, beta.pdf(Z, 2, 2), 'b')
-    axs[0].plot(Z, beta.pdf(Z, 2+h, 2+n-h), 'r')
+    axs[0].plot(Z, beta.pdf(Z, a+h, b+m-h), 'r')
     axs[1].plot(D, range(len(D)))
-    plt.savefig('Results/coins.pdf', bbox_inches='tight')
-    #plt.show()
+    #plt.savefig('Results/coins.pdf', bbox_inches='tight')
+    plt.show()
     
 @timeit
 def run02e():
@@ -131,7 +135,7 @@ def run02e():
     # initial state
     rng = np.random.default_rng(0)
     L = np.ones((N,N))
-    L[rng.random((N,N))<0.75] = -1 
+    L[rng.random((N,N)) < 0.75] = -1 
     plt.imshow(L)
     plt.show()
     
@@ -140,35 +144,51 @@ def run02e():
         return np.sum(- L * (np.roll(L,1,axis=0) + np.roll(L,1,axis=1)))
     
     # params
-    times = 1000000
-    BJ = 0.1
+    times = 300000
+    nCases = 20
+    MM = np.zeros(nCases)
+    BJs = np.linspace(0.1,1.0,nCases)
+    for case, BJ in enumerate(BJs):
+        # reset
+        L = np.ones((N,N))
+        L[rng.random((N,N)) < 0.75] = -1
+            
+        # run metropolis
+        M = np.repeat(L.sum(), times)
+        E = np.repeat(energy(L), times)
+        for t in range(1, times):
+            # proposal step
+            x = rng.integers(N)
+            y = rng.integers(N)
+            
+            # compute energy change
+            Ei = -L[x,y] * (L[(x+1) % N, y] + L[(x-1) % N, y] + L[x, (y+1) % N] + L[x, (y-1) % N])
+            dE = -2.0 * Ei
+            
+            # acceptance step
+            accept = np.random.random() < min(1, np.exp(-BJ*dE))
+            if accept:
+                L[x,y] *= -1 
+            
+            # macroscopic observables
+            if accept:
+                E[t] = E[t-1] + dE 
+                M[t] = M[t-1] + L[x,y] * 2
+            else:
+                E[t] = E[t-1]
+                M[t] = M[t-1]
         
-    # run metropolis
-    M = np.repeat(L.sum(), times)
-    E = np.repeat(energy(L), times)
-    for t in range(1, times):
-        # random index
-        x = rng.integers(N)
-        y = rng.integers(N)
-        
-        # compute energy change
-        Ei = -L[x,y] * (L[(x+1) % N, y] + L[(x-1) % N, y] + L[x, (y+1) % N] + L[x, (y-1) % N])
-        dE = -2.0 * Ei
-        
-        # change state
-        E[t] = E[t-1]
-        M[t] = M[t-1]
-        if np.random.random() < min(1, np.exp(-BJ*dE)):
-            L[x,y] *= -1  
-            E[t]   += dE
-            M[t]   += L[x,y] * 2
+        print(np.mean(M[times//2:]) / N**2)
+        MM[case] = np.mean(M[times//2:]) / N**2
         
     # postprocessing
-    print(f'Magnetization: {M[times//2:].mean()/N**2}, Energy: {E[times//2:].mean()}')
-    fig, axs = plt.subplots(1,3)
-    axs[0].plot(E)
-    axs[1].plot(M / N**2)
-    axs[2].imshow(L)
+    #print(f'Energy: {E[times//2:].mean()}, Magnetization: {M[times//2:].mean()/N**2}')
+    #fig, axs = plt.subplots(1,3,figsize=(12,4))
+    #axs[0].plot(E)
+    #axs[1].plot(M / N**2)
+    #axs[2].imshow(L)
+    plt.plot(BJs, MM)
+    plt.savefig('Results/phase.pdf', bbox_inches='tight')
     plt.show()
 
     
@@ -231,6 +251,56 @@ def run03e():
     
     
     plt.show()
+    
+@timeit
+def ps01():
+    ''' 
+    Code for assignment 01. Implements the Gauss Newton method
+    '''
+    # generate data
+    rng = np.random.default_rng(0)
+    w = np.array([850.0, 0.23])
+    X = rng.uniform(0.1, 0.5, size=(10,1))
+    y = w[0] * X ** w[1]
+    data = DataCollection(X=X, y=y)
+    data.save('Data/GaussNewton.npz')
+    
+    # model
+    class F:
+        def __init__(self, X, y):
+            # model parameters
+            self.weights = np.zeros((2,1))
+            
+            # data
+            self._X = X
+            self._y = y
+            
+        def eval(self):            
+            # residual
+            h = self._X ** self.weights[1]
+            f = self.weights[0] * h 
+            r = self._y - f
+            
+            # derivatives
+            gradf = np.hstack((h, f*np.log(X)))
+            
+            # return tuple
+            return r, gradf
+        
+        def __call__(self, X):
+            return self.weights[0] * X ** self.weights[1]
+    f = F(X, y)
+        
+    # optimization
+    gs = GN()
+    gs.fit(f, eps=1e-10)
+    print(f.weights)
+    
+    # post-processing
+    plt.scatter(X, y, color='b')
+    plt.scatter(X, f(X), color='r')
+    plt.show()
+    
 
 def run04():
     ''' 
@@ -470,7 +540,9 @@ def run10():
 
 if __name__ == "__main__":
     #run01()
-    run02()
+    #run02()
     #run02e()
     #run03()
     #run06()
+    
+    ps01()
