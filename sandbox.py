@@ -396,11 +396,14 @@ def ps02():
             c = np.vstack((np.zeros((self._nDim,1)), np.ones((self._nDim,1))))
             self._b = lam * c - A.T @ y
             
+            # modified bias
+            self._c = 0.5 * (y.T @ y)[0,0]
+            
             # linear inequalities
             self._B = np.block([[I, -I], [-I, -I]])
             
         def __call__(self, x):
-            return (x.T @ (0.5 * self._H @ x + self._b))[0,0]
+            return (x.T @ (0.5 * self._H @ x + self._b))[0,0] + self._c
         
         def eval(self, x):
             # gradient          
@@ -423,11 +426,20 @@ def ps02():
     linR = LinearRegression(nFeatures=n)
     linR.fit(data.X, data.y)
     
+    # unconstrained optimization with regularization
+    rigR = RidgeRegression(nFeatures=n)
+    rigR.fit(data.X, data.y, lam=1.0)
+    
+    # lasso regression
+    lasso = Lasso(nFeatures=n)
+    lasso.fit(data.X, data.y, lam=1.0)
+    
+    # post processing
     x = np.arange(n + 1).reshape(-1,1)
     plt.scatter(x, logB.x[:n+1], s=2, color='r', marker='o')
     plt.scatter(x, linR.weights, s=2, color='b', marker='o')
+    plt.scatter(x, rigR.weights, s=2, color='y', marker='o')
     plt.show()
-    #print(logB.x.T)
 
 def run05():
     ''' 

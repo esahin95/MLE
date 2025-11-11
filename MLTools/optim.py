@@ -145,8 +145,8 @@ class LogBarrier:
             
             # termination condition
             x += d
-            if np.linalg.norm(d, np.inf) < 1e-4:
-                print(f'terminated at iteration {i} with alpha {alp} and residual {self(x)}')
+            if np.linalg.norm(d, np.inf) < 1e-5:
+                #print(f'terminated at iteration {i} with alpha {alp} and residual {self(x)}')
                 return x
         raise Exception('Newton did not converge')
     
@@ -161,8 +161,9 @@ class LogBarrier:
             x = self.step(x, maxIter)
             
             # termination condition
-            if np.linalg.norm(x - self.x, np.inf) < 1e-3:
+            if np.linalg.norm(x - self.x, np.inf) < 1e-4:
                 self.x = x 
+                print(f'terminated at iteration {epoch} and residual {self._f(x)}')
                 break 
             
             # setup for next iteration
