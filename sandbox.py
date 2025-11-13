@@ -212,9 +212,11 @@ def run03():
     print(model)
     
     # compare prediction
-    plt.scatter(data.X, data.y, c='b')
-    plt.scatter(data.X, model(data.X), facecolors='none', edgecolors='r')
-    plt.show()
+    fig, ax = plt.subplots(1, 1, figsize=(4,2))
+    ax.scatter(data.X, data.y, c='b')
+    ax.scatter(data.X, model(data.X), facecolors='none', edgecolors='r')
+    ax.set(xlabel='$T$', ylabel='Failure')
+    plt.savefig('Results/failure.pdf', bbox_inches='tight')
     
 
 def run03e():
@@ -229,7 +231,12 @@ def run03e():
     
     # build model
     model = MultinomialLogisticRegression(1, 3)
-    model.fit(X, y, alp=1.0, epochs=1000)
+    model.fit(X, y, alp=5.0, epochs=500)
+    
+    # evaluate model
+    C = model.confusion(X,y)
+    print(C)
+    print(np.sum(np.diagonal(C))/np.sum(C))
     
     # post processing
     plt.scatter(X,y)
@@ -240,9 +247,26 @@ def run03e():
     y = ((X>0.5) * 2 + (X<-0.5) * 1).astype(np.int32)
     plt.scatter(X, y, s=1, facecolors='k')
     plt.scatter(X, model(X), s=1, facecolors='none', edgecolors='y')
-    
-    
     plt.show()
+    
+def run03f():
+    ''' 
+    Glass identification example
+    '''
+    # load data
+    from ucimlrepo import fetch_ucirepo 
+    glass_identification = fetch_ucirepo(id=42) 
+      
+    # data (as pandas dataframes) 
+    X = glass_identification.data.features.to_numpy()
+    y = glass_identification.data.targets.to_numpy()
+      
+    # build model
+    model = MultinomialLogisticRegression(X.shape[-1], np.max(y)+1)
+    model.fit(X, y, alp=0.001, epochs=1000000)
+    C = model.confusion(X,y)
+    print(C)
+    print(np.sum(np.diagonal(C))/np.sum(C))
     
 #@timeit
 def ps01():
@@ -319,7 +343,7 @@ def run04():
     YPred = model(X[1000:])
     plt.scatter(Y[1000:],YPred)
     
-def run04e():
+def run04a():
     ''' 
     Some extras for exercise 04. Implement the Nealder Mead simplex method and 
     use it for parameter identification in population dynamics.
@@ -368,10 +392,10 @@ def run04e():
     plt.plot(T, Y, '--')
     plt.show()
 
-def ps02():
+def run04b():
     ''' 
-    Code for assignment 02. Implements the log barrier method to solve optimization
-    with linear inequality constraints    
+    Some extras for exercise 04. Implements the log barrier method to solve optimization
+    with (linear) inequality constraints
     '''                    
     # load data
     data = DataCollection()
@@ -426,21 +450,76 @@ def ps02():
     linR = LinearRegression(nFeatures=n)
     linR.fit(data.X, data.y)
     
-    # unconstrained optimization with regularization
-    rigR = RidgeRegression(nFeatures=n)
-    rigR.fit(data.X, data.y, lam=1.0)
-    
-    # lasso regression
-    lasso = Lasso(nFeatures=n)
-    lasso.fit(data.X, data.y, lam=1.0)
-    
     # post processing
     x = np.arange(n + 1).reshape(-1,1)
     plt.scatter(x, logB.x[:n+1], s=2, color='r', marker='o')
     plt.scatter(x, linR.weights, s=2, color='b', marker='o')
-    plt.scatter(x, rigR.weights, s=2, color='y', marker='o')
     plt.show()
-
+    
+def run04c():
+    # load data
+    ds = DataCollection()
+    ds.load('Data/wLogistic.npz')
+    
+    # train model    
+    model = WeightedLogistic(nFeatures=ds.X.shape[-1])
+    model.fit(ds.X, ds.y, tau=0.01)
+    
+    # test model   
+    yp = model(ds.Xt)
+    
+    # post processing
+    fig, axs = plt.subplots(1, 2, figsize=(6,3))
+    P = ds.y.flatten() > 0.0
+    N = ds.y.flatten() < 0.0
+    for i, y in enumerate([ds.yt, yp]):
+        axs[i].contourf(
+            ds.Xt[:,0].reshape(ds.sz), 
+            ds.Xt[:,1].reshape(ds.sz), 
+            y.reshape(ds.sz), 
+            cmap='coolwarm', 
+            alpha=0.5, 
+            vmin=-1.0, vmax=1.0
+        )
+        axs[i].scatter(ds.X[P,0], ds.X[P,1], color='r')
+        axs[i].scatter(ds.X[N,0], ds.X[N,1], color='b')
+    plt.show()
+    
+def run04d():
+    ''' 
+    Extras for exercise 04. Implement polynomial regression
+    '''
+    # ground truth
+    def f(X):
+        return 3*X - X**2 + 2*X**3
+    
+    # generate data
+    rng = np.random.default_rng(0)
+    m = 10
+    X = rng.uniform(-1, 1, size=(m,1))
+    y = f(X) + rng.normal(loc=0.0, scale=0.1, size=(m,1))
+    
+    # feature map
+    p = 8
+    Phi = np.power(X[...,np.newaxis], np.arange(1,p+1)).reshape(X.shape[0],-1)
+    
+    # train model
+    model = RidgeRegression(nFeatures=Phi.shape[-1])
+    model.fit(Phi, y, lam=0.0)
+    
+    # test model
+    x = np.linspace(-1, 1, 1000)
+    yTest = f(x)
+    phi = np.power(x[...,np.newaxis], np.arange(1,p+1)).reshape(x.shape[0],-1)
+    yPred = model(phi).reshape(x.shape)
+    print(np.mean(np.abs(yPred-yTest)))
+    
+    # post processing
+    plt.plot(x, yTest, 'k-')
+    plt.scatter(X, y, color='k')
+    plt.plot(x, yPred, 'b-')
+    plt.show()
+    
 def run05():
     ''' 
     Run code for exercise 05. Naive Bayes and a mixed version with real features
@@ -607,7 +686,8 @@ if __name__ == "__main__":
     #run01()
     #run02()
     #run02e()
-    #run03()
+    #run03e()
+    run04d()
     #run06()
     
-    ps02()
+    #run04c()

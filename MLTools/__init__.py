@@ -19,7 +19,8 @@ def timeit(f):
 
 # import namespaces
 from MLTools.dataset import DataCollection
-from MLTools.linearModels import LinearRegression, LogisticRegression, Perceptron, MultinomialLogisticRegression, RidgeRegression, Lasso
+from MLTools.linearModels import LinearRegression, RidgeRegression, Lasso
+from MLTools.linearModels import LogisticRegression, Perceptron, MultinomialLogisticRegression, WeightedLogistic
 from MLTools.neuralNetworks import MLP
 from MLTools.ode import FreeFall, Pendulum, PopDynamics
 from MLTools.MCMC import MCMC
@@ -38,6 +39,7 @@ __all__ = [
     "MultinomialLogisticRegression",
     "RidgeRegression",
     "Lasso",
+    "WeightedLogistic",
     "Pendulum",
     "FreeFall",
     "PopDynamics",
