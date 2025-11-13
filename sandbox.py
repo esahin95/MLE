@@ -444,18 +444,19 @@ def run04b():
             return self._nDim
     
     # constrained optimization    
-    logB = LogBarrier(Objective(data.X, data.y, lam=1.0))
+    logB = LogBarrier(Objective(data.X, data.y, lam=0.1))
     logB.optimize(epochs=50, maxIter=50)
     
     # unconstrained optimization
     linR = RidgeRegression(nFeatures=n)
-    linR.fit(data.X, data.y, lam=1.0)
+    linR.fit(data.X, data.y, lam=0.1)
     
     # post processing
     x = np.arange(n + 1).reshape(-1,1)
-    plt.scatter(x, logB.x[:n+1], s=2, color='r', marker='o')
-    plt.scatter(x, linR.weights, s=2, color='b', marker='o')
-    plt.show()
+    fig, ax = plt.subplots(1,1,figsize=(4,2))
+    ax.scatter(x, logB.x[:n+1], s=15, color='r', marker='o')
+    ax.scatter(x, linR.weights, s=15, color='b', marker='o')
+    plt.savefig('Results/weights.pdf', bbox_inches='tight')
     
 def run04c():
     # load data

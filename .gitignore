@@ -1,2 +1,5 @@
 # match compilation directories
 __pycache__
+
+# match results
+Results
