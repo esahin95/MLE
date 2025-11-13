@@ -399,7 +399,8 @@ def run04b():
     '''                    
     # load data
     data = DataCollection()
-    data.load('Data/lasso.npz')
+    #data.load('Data/lasso.npz')
+    data.load('Data/polynom.npz')
     n = data.X.shape[-1]
     
     # objective
@@ -447,8 +448,8 @@ def run04b():
     logB.optimize(epochs=50, maxIter=50)
     
     # unconstrained optimization
-    linR = LinearRegression(nFeatures=n)
-    linR.fit(data.X, data.y)
+    linR = RidgeRegression(nFeatures=n)
+    linR.fit(data.X, data.y, lam=1.0)
     
     # post processing
     x = np.arange(n + 1).reshape(-1,1)
@@ -502,6 +503,9 @@ def run04d():
     # feature map
     p = 8
     Phi = np.power(X[...,np.newaxis], np.arange(1,p+1)).reshape(X.shape[0],-1)
+    
+    #data = DataCollection(X=Phi, y=y)
+    #data.save('Data/polynom.npz')
     
     # train model
     model = RidgeRegression(nFeatures=Phi.shape[-1])
@@ -687,7 +691,8 @@ if __name__ == "__main__":
     #run02()
     #run02e()
     #run03e()
-    run04d()
+    run04b()
+    #run04d()
     #run06()
     
     #run04c()

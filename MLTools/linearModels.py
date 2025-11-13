@@ -41,8 +41,8 @@ class LinearRegression(Linear):
         X = np.hstack((np.ones((X.shape[0], 1)), X))
         
         # optimize objective
-        self.weights, residuals = np.linalg.lstsq(X, y)[0:1]
-        print(residuals)
+        self.weights, residuals, rank, s = np.linalg.lstsq(X, y)
+        print(residuals.item())
     
 class LogisticRegression(Linear):          
     def logit(self, x):
