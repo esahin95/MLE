@@ -1,0 +1,16 @@
+name: bones
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - spyder
+  - jupyterlab
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - openpyxl
+  - h5py
+  - pip
+  - pip:
+    - ucimlrepo
