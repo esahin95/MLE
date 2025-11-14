@@ -9,16 +9,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 from MLTools import *
-from timeit import default_timer
 
-def timeit(f):
-    def timed(*args, **kwargs):
-        ts = default_timer()
-        rs = f(*args, **kwargs)
-        te = default_timer()
-        print(f'func:{f.__name__!r} took: {te-ts:.6e} s')
-        return rs
-    return timed
 
 def run01():
     ''' 
@@ -60,7 +51,7 @@ def run01():
     tPred = np.sqrt(h / g) * model(x.reshape(1,1))
     print(tTrue, tPred)
    
-@timeit
+#@timeit
 def run02():
     ''' 
     Run code for exercise 02. Metropolis algorithm to sample the posterior 
@@ -125,7 +116,7 @@ def run02():
     #plt.savefig('Results/coins.pdf', bbox_inches='tight')
     plt.show()
     
-@timeit
+#@timeit
 def run02e():
     ''' 
     Run code for Ising model. Magnetization in thermal Equilibrium
@@ -221,9 +212,11 @@ def run03():
     print(model)
     
     # compare prediction
-    plt.scatter(data.X, data.y, c='b')
-    plt.scatter(data.X, model(data.X), facecolors='none', edgecolors='r')
-    plt.show()
+    fig, ax = plt.subplots(1, 1, figsize=(4,2))
+    ax.scatter(data.X, data.y, c='b')
+    ax.scatter(data.X, model(data.X), facecolors='none', edgecolors='r')
+    ax.set(xlabel='$T$', ylabel='Failure')
+    plt.savefig('Results/failure.pdf', bbox_inches='tight')
     
 
 def run03e():
@@ -238,7 +231,12 @@ def run03e():
     
     # build model
     model = MultinomialLogisticRegression(1, 3)
-    model.fit(X, y, alp=1.0, epochs=1000)
+    model.fit(X, y, alp=5.0, epochs=500)
+    
+    # evaluate model
+    C = model.confusion(X,y)
+    print(C)
+    print(np.sum(np.diagonal(C))/np.sum(C))
     
     # post processing
     plt.scatter(X,y)
@@ -249,10 +247,28 @@ def run03e():
     y = ((X>0.5) * 2 + (X<-0.5) * 1).astype(np.int32)
     plt.scatter(X, y, s=1, facecolors='k')
     plt.scatter(X, model(X), s=1, facecolors='none', edgecolors='y')
-    
-    
     plt.show()
     
+def run03f():
+    ''' 
+    Glass identification example
+    '''
+    # load data
+    from ucimlrepo import fetch_ucirepo 
+    glass_identification = fetch_ucirepo(id=42) 
+      
+    # data (as pandas dataframes) 
+    X = glass_identification.data.features.to_numpy()
+    y = glass_identification.data.targets.to_numpy()
+      
+    # build model
+    model = MultinomialLogisticRegression(X.shape[-1], np.max(y)+1)
+    model.fit(X, y, alp=0.001, epochs=1000000)
+    C = model.confusion(X,y)
+    print(C)
+    print(np.sum(np.diagonal(C))/np.sum(C))
+    
+#@timeit
 def ps01():
     ''' 
     Code for assignment 01. Implements the Gauss Newton method
@@ -332,7 +348,7 @@ def run04():
     YPred = model(X[1000:])
     plt.scatter(Y[1000:],YPred)
     
-def run04e():
+def run04a():
     ''' 
     Some extras for exercise 04. Implement the Nealder Mead simplex method and 
     use it for parameter identification in population dynamics.
@@ -381,207 +397,139 @@ def run04e():
     plt.plot(T, Y, '--')
     plt.show()
 
-def ps02():
+def run04b():
     ''' 
-    Code for assignment 02. Implements the log barrier method to solve optimization
-    with linear inequality constraints    
-    '''
-    # packages
-    
-    
-    # implement models
-    class Lasso:            
-        def step(self, X, Y, i):
-            # eliminate coordinate for step
-            self._w[i] = 0
-            
-            # partial cost
-            cost = X @ self._w - Y
-            
-            # possible weights
-            Xi = X[:,i]
-            wp = max(0, (np.inner(cost, -Xi) - self._lam) / np.inner(Xi, Xi))
-            wn = min(0, (np.inner(cost, -Xi) + self._lam) / np.inner(Xi, Xi))
-            
-            # update weight
-            Jp = 0.5 * np.inner(wp*Xi + cost, wp*Xi + cost) + self._lam * wp
-            Jn = 0.5 * np.inner(wn*Xi + cost, wn*Xi + cost) - self._lam * wn
-            if Jn < Jp:
-                self._w[i] = wn
-            else:
-                self._w[i] = wp
-            
-        @timeit
-        def optimize(self, X, y, lam=1.0):
-            # initialize
-            self._lam = lam
-            self._w = np.ones(X.shape[-1])
-            
-            # sequential optimization
-            for epoch in range(30):
-                for j in range(X.shape[-1]):
-                    self.step(X, y, j)
-                
-                # current cost
-                c = y - X@self._w
-                J = 0.5 * np.inner(c,c) + self._lam * np.linalg.norm(self._w, 1)
-                print(J)
-            
-    class LogBarrierBase:
-        @timeit
-        def optimize(self, X, y, lam=1.0, epochs=50, maxIter=50):
-            n = X.shape[-1]
-            
-            # loss
-            def L(d):
-                p = s + d
-                q = B @ p
-                if np.any(q >= 0):
-                    res = np.inf
-                else:
-                    res = 0.5 * np.sum(p.T @ H @ p) + np.sum(b * p) - mu * np.sum(np.log(-q))
-                return res
-            
-            # initialize matrices
-            I = np.eye(n)
-            A = np.block([X, np.zeros_like(X)])
-            B = np.block([[I, -I], [-I, -I]])
-            H = A.T @ A
-            c = np.vstack((np.zeros((n,1)), np.ones((n,1))))
-            b = lam * c - A.T @ y
-            
-            # initialize solution
-            s0 = c.copy()
-            mu = 1.0
-            
-            # optimization
-            for epoch in range(epochs):                
-                # solution of subproblem
-                alp = 1.0
-                s = s0.copy()
-                for i in range(maxIter):
-                    # constraints
-                    x = B @ s
-                    
-                    # gradient
-                    gradL = H @ s + b - mu * B.T @ (1.0/x)
-                    
-                    # Hessian
-                    HL = H + mu * B.T @ ((x**-2) * B)
-                    
-                    # step 
-                    d = np.linalg.solve(HL, -gradL)
-                    
-                    # line search
-                    k0, k1 = L(0), 0.01 * np.sum(gradL * d)
-                    while L(alp * d) > k0 + k1 * alp:
-                        alp *= 0.5 
-                        if alp < 1e-5:
-                            raise Exception('alpha too small')
-                    d *= alp 
-                    alp = min(1.0, 1.2*alp)
-
-                    # termination condition
-                    s += d
-                    if np.linalg.norm(d, np.inf) < 1e-4:
-                        print(f'terminated at iteration {i} with alpha {alp} and residual {L(0)}')
-                        break
-                
-                # termination condition
-                if np.linalg.norm(s-s0, np.inf) < 1e-3:
-                    #print(s[:n].T)
-                    break
-                
-                # update
-                mu *= 0.5 
-                s0 = s  
-                
-    class LogBarrier:
-        @timeit
-        def optimize(self, X, y, lam=1.0, epochs=50, maxIter=50):
-            n = X.shape[-1]
-            
-            # loss
-            def L(d):
-                pw, pt = w + d[:n], t + d[n:]
-                if np.any(pw-pt >= 0) or np.any(-pw-pt >= 0):
-                    return np.inf 
-                else:
-                    Xw = X @ pw
-                    return 0.5 * np.sum(Xw**2) - np.sum(y * Xw) + lam * np.sum(pt) - mu * np.sum(np.log(pt**2 - pw**2))
-            
-            # initialize matrices
-            H = X.T @ X
-            b = lam * np.ones((n,1))
-            
-            # initialize solution
-            w0, t0 = np.zeros((n,1)), np.ones((n,1))
-            mu = 1.0
-            
-            # optimization
-            for epoch in range(epochs):                
-                # solution of subproblem
-                alp = 1.0
-                w, t = w0.copy(), t0.copy()
-                for i in range(maxIter):
-                    # constraints
-                    c1 = 1/(w + t)
-                    c2 = 1/(w - t)
-                    
-                    # gradient
-                    gradL = np.vstack((
-                        H @ w - X.T @ y - mu * (c1 + c2), 
-                        b - mu * (c1 - c2)
-                    ))
-                    
-                    # Hessian
-                    HLt = mu * np.diagflat(c1**2 + c2**2)
-                    HLn = mu * np.diagflat(c1**2 - c2**2)
-                    HL = np.block([[H+HLt, HLn], [HLn.T, HLt]])
-                    
-                    # step 
-                    d = np.linalg.solve(HL, -gradL)
-                    
-                    # line search
-                    k0, k1 = L(np.zeros_like(d)), 0.01 * np.sum(gradL * d)
-                    while L(alp * d) > k0 + k1 * alp:
-                        alp *= 0.5 
-                        if alp < 1e-5:
-                            raise Exception('alpha too small')
-                    d *= alp
-                    alp = min(1.0, 1.2*alp)
-
-                    # termination condition
-                    w += d[:n]
-                    t += d[n:]
-                    if np.linalg.norm(d, np.inf) < 1e-4:
-                        print(f'terminated at iteration {i} with alpha {alp} and residual {L(np.zeros_like(d))}')
-                        break
-                
-                # termination condition
-                if max(np.linalg.norm(w-w0,np.inf), np.linalg.norm(t-t0,np.inf)) < 1e-3:
-                    #print(s[:n].T)
-                    break
-                
-                # update
-                mu *= 0.5 
-                w0, t0 = w, t
-                    
+    Some extras for exercise 04. Implements the log barrier method to solve optimization
+    with (linear) inequality constraints
+    '''                    
     # load data
     data = DataCollection()
-    data.load('Data/lasso.npz')
-    #print(data.w)
+    #data.load('Data/lasso.npz')
+    data.load('Data/polynom.npz')
+    n = data.X.shape[-1]
     
-    # optimization
-    lasso = Lasso()
-    lasso.optimize(data.X, data.y, lam=1.0)
+    # objective
+    class Objective:
+        def __init__(self, X, y, lam=1.0):
+            # append bias
+            X = np.hstack((np.ones((X.shape[0], 1)), X))
+            
+            # original problem size
+            self._nDim = X.shape[-1]
+            
+            # modified quadratic term
+            I = np.eye(self._nDim)
+            A = np.block([X, np.zeros_like(X)])
+            self._H = A.T @ A
+            
+            # modified linear term
+            c = np.vstack((np.zeros((self._nDim,1)), np.ones((self._nDim,1))))
+            self._b = lam * c - A.T @ y
+            
+            # modified bias
+            self._c = 0.5 * (y.T @ y)[0,0]
+            
+            # linear inequalities
+            self._B = np.block([[I, -I], [-I, -I]])
+            
+        def __call__(self, x):
+            return (x.T @ (0.5 * self._H @ x + self._b))[0,0] + self._c
+        
+        def eval(self, x):
+            # gradient          
+            gradL = self._H @ x + self._b
+            
+            # return gradient and Hessian
+            return gradL, self._H
+            
+        def ineq(self, x):
+            return self._B @ x, self._B
+        
+        def __len__(self):
+            return self._nDim
     
-    logB = LogBarrierBase()
-    logB.optimize(data.X, data.y.reshape(-1,1), lam=1.0, epochs=50, maxIter=50)
+    # constrained optimization    
+    logB = LogBarrier(Objective(data.X, data.y, lam=0.1))
+    logB.optimize(epochs=50, maxIter=50)
     
-    logB = LogBarrier()
-    logB.optimize(data.X, data.y.reshape(-1,1), lam=1.0, epochs=50, maxIter=50)
-
+    # unconstrained optimization
+    linR = RidgeRegression(nFeatures=n)
+    linR.fit(data.X, data.y, lam=0.1)
+    
+    # post processing
+    x = np.arange(n + 1).reshape(-1,1)
+    fig, ax = plt.subplots(1,1,figsize=(4,2))
+    ax.scatter(x, logB.x[:n+1], s=15, color='r', marker='o')
+    ax.scatter(x, linR.weights, s=15, color='b', marker='o')
+    plt.savefig('Results/weights.pdf', bbox_inches='tight')
+    
+def run04c():
+    # load data
+    ds = DataCollection()
+    ds.load('Data/wLogistic.npz')
+    
+    # train model    
+    model = WeightedLogistic(nFeatures=ds.X.shape[-1])
+    model.fit(ds.X, ds.y, tau=0.01)
+    
+    # test model   
+    yp = model(ds.Xt)
+    
+    # post processing
+    fig, axs = plt.subplots(1, 2, figsize=(6,3))
+    P = ds.y.flatten() > 0.0
+    N = ds.y.flatten() < 0.0
+    for i, y in enumerate([ds.yt, yp]):
+        axs[i].contourf(
+            ds.Xt[:,0].reshape(ds.sz), 
+            ds.Xt[:,1].reshape(ds.sz), 
+            y.reshape(ds.sz), 
+            cmap='coolwarm', 
+            alpha=0.5, 
+            vmin=-1.0, vmax=1.0
+        )
+        axs[i].scatter(ds.X[P,0], ds.X[P,1], color='r')
+        axs[i].scatter(ds.X[N,0], ds.X[N,1], color='b')
+    plt.show()
+    
+def run04d():
+    ''' 
+    Extras for exercise 04. Implement polynomial regression
+    '''
+    # ground truth
+    def f(X):
+        return 3*X - X**2 + 2*X**3
+    
+    # generate data
+    rng = np.random.default_rng(0)
+    m = 10
+    X = rng.uniform(-1, 1, size=(m,1))
+    y = f(X) + rng.normal(loc=0.0, scale=0.1, size=(m,1))
+    
+    # feature map
+    p = 8
+    Phi = np.power(X[...,np.newaxis], np.arange(1,p+1)).reshape(X.shape[0],-1)
+    
+    #data = DataCollection(X=Phi, y=y)
+    #data.save('Data/polynom.npz')
+    
+    # train model
+    model = RidgeRegression(nFeatures=Phi.shape[-1])
+    model.fit(Phi, y, lam=0.0)
+    
+    # test model
+    x = np.linspace(-1, 1, 1000)
+    yTest = f(x)
+    phi = np.power(x[...,np.newaxis], np.arange(1,p+1)).reshape(x.shape[0],-1)
+    yPred = model(phi).reshape(x.shape)
+    print(np.mean(np.abs(yPred-yTest)))
+    
+    # post processing
+    plt.plot(x, yTest, 'k-')
+    plt.scatter(X, y, color='k')
+    plt.plot(x, yPred, 'b-')
+    plt.show()
+    
 def run05():
     ''' 
     Run code for exercise 05. Naive Bayes and a mixed version with real features
@@ -748,7 +696,9 @@ if __name__ == "__main__":
     #run01()
     #run02()
     #run02e()
-    #run03()
+    #run03e()
+    run04b()
+    #run04d()
     #run06()
     
-    ps01()
+    #run04c()
