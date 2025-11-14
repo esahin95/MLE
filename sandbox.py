@@ -253,7 +253,6 @@ def run03e():
     
     plt.show()
     
-@timeit
 def ps01():
     ''' 
     Code for assignment 01. Implements the Gauss Newton method
@@ -265,6 +264,8 @@ def ps01():
     y = w[0] * X ** w[1]
     data = DataCollection(X=X, y=y)
     data.save('Data/GaussNewton.npz')
+    print(X.T)
+    print(y.T)
     
     # model
     class F:
@@ -294,7 +295,10 @@ def ps01():
         
     # optimization
     gs = GN()
+    ts = default_timer()
     gs.fit(f, eps=1e-10)
+    dt = default_timer() - ts
+    print(f'time for optimization: {dt:.5e}')
     print(f.weights)
     
     # post-processing
@@ -747,4 +751,4 @@ if __name__ == "__main__":
     #run03()
     #run06()
     
-    ps02()
+    ps01()
