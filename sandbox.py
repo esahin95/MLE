@@ -280,6 +280,8 @@ def ps01():
     y = w[0] * X ** w[1]
     data = DataCollection(X=X, y=y)
     data.save('Data/GaussNewton.npz')
+    print(X.T)
+    print(y.T)
     
     # model
     class F:
@@ -309,7 +311,10 @@ def ps01():
         
     # optimization
     gs = GN()
+    ts = default_timer()
     gs.fit(f, eps=1e-10)
+    dt = default_timer() - ts
+    print(f'time for optimization: {dt:.5e}')
     print(f.weights)
     
     # post-processing
@@ -688,4 +693,12 @@ def run10():
     
 
 if __name__ == "__main__":
-    run04d()
+    #run01()
+    #run02()
+    #run02e()
+    #run03e()
+    run04b()
+    #run04d()
+    #run06()
+    
+    #run04c()
