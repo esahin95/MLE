@@ -319,7 +319,7 @@ def ps01():
     
 
 def run04():
-    ''' 
+    '''
     Run code for exercise 04. Implement regularization into linear model.
     Parameter identification in ODEs.
     '''
@@ -688,12 +688,4 @@ def run10():
     
 
 if __name__ == "__main__":
-    #run01()
-    #run02()
-    #run02e()
-    #run03e()
-    run04b()
-    #run04d()
-    #run06()
-    
-    #run04c()
+    run04d()
