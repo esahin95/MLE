@@ -6,11 +6,10 @@ Created on Fri Oct 24 15:21:46 2025
 """
 
 import numpy as np 
+from . import timeit
 
 class SVC:
-    def __init__(self, sigma=1.0):
-        self.sig2 = sigma**2
-    
+    @timeit      
     def fit(self, X, y, maxPasses=3, C=0.1, tol=1e-3):
         # problem size
         m = X.shape[0]
@@ -85,17 +84,13 @@ class SVC:
                 passes = 0
             
         # save active set
-        active = np.zeros(m, dtype=bool)
-        for i in range(m):
-            if self.alpha[i] >= tol:
-                active[i] = True
+        active = self.alpha.flat >= tol
         self.alpha = self.alpha[active]
         self.X = X[active]
         self.y = y[active]
                 
     def K(self, x, z):
-        #return np.inner(x, z)
-        return np.exp(-0.5*np.linalg.norm(x-z)**2 / self.sig2)
+        return np.inner(x, z)
     
     def __call__(self, Z):
         n, m = Z.shape[0], self.X.shape[0]
@@ -105,4 +100,13 @@ class SVC:
                 K[i,j] = self.K(Z[i], self.X[j])
         
         return K @ (self.alpha * self.y) + self.bias
+    
+    def predict(self, Z):
+        return np.sign(self(Z))
                 
+class SVCSE(SVC):
+    def __init__(self, sig=1.0):
+        self._sig2 = sig**2
+        
+    def K(self, x, z):
+        return np.exp(-0.5*np.linalg.norm(x-z)**2 / self._sig2)

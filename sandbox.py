@@ -562,34 +562,45 @@ def run06():
     ''' 
     Support Vector Classification
     '''
+    # ground truth
+    a, b, c = 1.0, 0.0, 0.5
+    def f(x):
+        return c * np.sin(a * x - b)
+    def F(X):
+        y = np.ones((X.shape[0], 1))
+        y[X[:,1] < f(X[:,0])] = -1
+        return y
+    
     # generate random data
     rng = np.random.default_rng(10)
     X = rng.uniform(-1,1,size=(120,2))
-    
-    w = np.array([0.2,0.4])
-    b = 0.1
-    y = np.sign(X @ w + b).reshape(-1,1)
+    y = F(X)
     
     # train model
-    model = SVC(0.2)
+    model = SVC()
     model.fit(X, y, C=50, tol=1e-4, maxPasses=5)
     
     # prediction
     Xt,Yt = np.meshgrid(np.linspace(-1,1,100), np.linspace(-1,1,100))
     Pt = np.vstack((Xt.flat, Yt.flat)).T
-    
-    yPred = np.sign(model(Pt))
-    plt.scatter(Pt[yPred.flat>0][:,0], Pt[yPred.flat>0][:,1], color='y')
-    plt.scatter(Pt[yPred.flat<0][:,0], Pt[yPred.flat<0][:,1], color='g')
-    
-    # training data
-    plt.scatter(X[y.flat>0][:,0], X[y.flat>0][:,1], color='r')
-    plt.scatter(X[y.flat<0][:,0], X[y.flat<0][:,1], color='b')
-    
-    # solution
-    x = np.linspace(-1,1,2)
-    plt.plot(x, -(b + w[0]*x)/w[1], 'k')
-    plt.show()
+    yPred = model.predict(Pt)
+
+    # postprocessing
+    fig, ax = plt.subplots(1, 1, figsize=(3,3))
+    P = y.flatten() > 0.0
+    N = y.flatten() < 0.0
+    ax.contourf(
+        Xt, Yt, np.reshape(yPred, Xt.shape), 
+        cmap='coolwarm', 
+        alpha=0.5, 
+        vmin=-1.0, vmax=1.0
+    )
+    ax.scatter(X[P,0], X[P,1], s=5, color='r')
+    ax.scatter(X[N,0], X[N,1], s=5, color='b')
+    ax.set_axis_off()
+    x = np.linspace(-1,1,100)
+    plt.plot(x, f(x), 'k')
+    plt.savefig('Results/svm.pdf', bbox_inches='tight', pad_inches=0.0, transparent=True)
     
 def run07():
     ''' 
@@ -697,8 +708,8 @@ if __name__ == "__main__":
     #run02()
     #run02e()
     #run03e()
-    run04b()
+    #run04b()
     #run04d()
-    #run06()
+    run06()
     
     #run04c()

@@ -28,7 +28,7 @@ from MLTools.cluster import KMeans
 from MLTools.factorization import PCA
 from MLTools.probabilistic import NaiveBayes, NaiveBayesMixed, ICA
 from MLTools.optim import NealderMead, GN, LogBarrier
-from MLTools.svm import SVC
+from MLTools.svm import SVC, SVCSE
 
 # visible classes in external applications
 __all__ = [
@@ -54,5 +54,6 @@ __all__ = [
     "GN",
     "LogBarrier",
     "SVC",
+    "SVCSE",
     "timeit"
 ]
