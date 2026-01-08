@@ -64,8 +64,9 @@ class NeuralNetwork(nn.Module):
         X = self._post(X)
         return X
     
-    def fit(self, dataLoaderTrain, dataLoaderTest, epochs=10):
-        size = len(dataLoaderTrain)
+    def fit(self, dataLoader, epochs=5):
+        numOfBatches = len(dataLoader)
+        numOfExamples = len(dataLoader.dataset)
         
         # loss function
         lossFun = nn.CrossEntropyLoss()
@@ -75,8 +76,9 @@ class NeuralNetwork(nn.Module):
         
         # training loop
         for epoch in range(epochs):
+            print(f'Current epoch: {epoch}\n')
             self.train()
-            for batch, (X, y) in enumerate(dataLoaderTrain):
+            for X, y in dataLoader:
                 X, y = X.to(device), y.to(device)
                 
                 # prediction
@@ -87,9 +89,25 @@ class NeuralNetwork(nn.Module):
                 optim.zero_grad()
                 loss.backward()
                 optim.step()
+                
+            self.eval()
+            with torch.no_grad():
+                loss, correct = 0.0, 0
+                for X, y in dataLoader:
+                    X, y = X.to(device), y.to(device)
+                    
+                    pred = model(X)
+                    loss += lossFun(pred, y).item()
+                    correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            loss /= numOfBatches
+            correct /= numOfExamples
+            print(f"Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {loss:>8f} \n")
+            
             
             
             
     
 model = NeuralNetwork().to(device)
 print(model)
+
+model.fit(dataLoaderTrain, epochs=5)

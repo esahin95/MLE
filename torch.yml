@@ -1,0 +1,18 @@
+name: torch
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - spyder
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - openpyxl
+  - h5py
+  - pip
+  - pip:
+    - --index-url https://download.pytorch.org/whl/cu130
+    - torch
+    - torchaudio
+    - torchvision
