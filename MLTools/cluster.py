@@ -62,17 +62,15 @@ class DBSCAN:
         
         # Initialize variables
         m = X.shape[0]
-        visited = np.zeros(m, dtype=bool)
         cluster = np.zeros(m, dtype=int)
         C = 0
         
         # Loop over dataset
         for i in range(m):
-            if visited[i]:
+            if cluster[i] > 0:
                 continue
             
             # Index set of neighbours
-            visited[i] = True 
             N = set(kdTree.query_ball_point(X[i], r))
             if len(N) < minPts:
                 continue
@@ -83,13 +81,12 @@ class DBSCAN:
             while len(N) > 0:
                 j = N.pop()
                 
-                # Add to cluster if possible
+                # Add point to cluster or ignore
                 if cluster[j] > 0:
                     continue
                 cluster[j] = C 
                 
                 # Expand neighbourhood
-                visited[j] = True
                 NExp = set(kdTree.query_ball_point(X[j], r))
                 if len(NExp) >= minPts:
                     N = N | NExp
