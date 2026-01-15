@@ -24,7 +24,7 @@ from MLTools.linearModels import LogisticRegression, Perceptron, MultinomialLogi
 from MLTools.neuralNetworks import MLP
 from MLTools.ode import FreeFall, Pendulum, PopDynamics
 from MLTools.MCMC import MCMC
-from MLTools.cluster import KMeans
+from MLTools.cluster import KMeans, DBSCAN
 from MLTools.factorization import PCA
 from MLTools.probabilistic import NaiveBayes, NaiveBayesMixed, ICA
 from MLTools.optim import NealderMead, GN, LogBarrier
@@ -46,6 +46,7 @@ __all__ = [
     "MLP",
     "MCMC",
     "KMeans",
+    "DBSCAN",
     "PCA",
     "NaiveBayes",
     "NaiveBayesMixed",

@@ -665,7 +665,35 @@ def run09a():
         plt.scatter(X[I,0], X[I,1], c=f'C{i}', alpha=0.5)
         plt.scatter(model._centroids[i][0], model._centroids[i][1], c='k', alpha=1.0)
     plt.show()
+
+def run09c():
+    ''' 
+    Implementation of DBSCAN
+    '''
+    # generate two moons data
+    nSamplesPerMoon = 240
+    noise = 0.02 
+    rng = np.random.default_rng(0)
     
+    T = np.linspace(0, np.pi, nSamplesPerMoon).reshape(-1,1)
+    X = np.block([[np.cos(T), np.sin(T)], [1-np.cos(T), 0.5-np.sin(T)]]);
+    X += rng.normal(loc=0.0, scale=noise, size=X.shape)
+    y = np.block([[np.zeros_like(T)], [np.ones_like(T)]])
+    
+    fig, ax = plt.subplots(figsize=(4,3))
+    ax.scatter(X[:,0], X[:,1], c=y, s=5)
+    plt.show()
+    
+    # train model
+    model = DBSCAN()
+    yPred = model.fit(X, 10, 0.08)
+    
+    # postprocessing
+    fig, ax = plt.subplots(figsize=(4,3))
+    ax.scatter(X[:,0], X[:,1], c=yPred, s=5)
+    plt.show()                 
+        
+
 def run09b():
     ''' 
     factorization (PCA)
@@ -710,6 +738,6 @@ if __name__ == "__main__":
     #run03e()
     #run04b()
     #run04d()
-    run06()
+    run09c()
     
     #run04c()

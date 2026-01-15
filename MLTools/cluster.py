@@ -6,6 +6,8 @@ Created on Fri Oct 24 10:25:18 2025
 """
 
 import numpy as np
+from scipy.spatial import KDTree
+from . import timeit
 
 class KMeans:
     def fit(self, X, k):
@@ -50,3 +52,47 @@ class KMeans:
             for j, c in enumerate(self._centroids):
                 distances[i,j] = np.sum((x - c)**2)
         return np.argmin(distances, axis=-1, keepdims=True)
+    
+    
+class DBSCAN:
+    @timeit    
+    def fit(self, X, minPts, r, leafsize=30):        
+        # Processing neighbourhoods
+        kdTree = KDTree(X, leafsize=leafsize)
+        
+        # Initialize variables
+        m = X.shape[0]
+        visited = np.zeros(m, dtype=bool)
+        cluster = np.zeros(m, dtype=int)
+        C = 0
+        
+        # Loop over dataset
+        for i in range(m):
+            if visited[i]:
+                continue
+            
+            # Index set of neighbours
+            visited[i] = True 
+            N = set(kdTree.query_ball_point(X[i], r))
+            if len(N) < minPts:
+                continue
+            
+            # Generate new cluster
+            C += 1
+            cluster[i] = C
+            while len(N) > 0:
+                j = N.pop()
+                
+                # Add to cluster if possible
+                if cluster[j] > 0:
+                    continue
+                cluster[j] = C 
+                
+                # Expand neighbourhood
+                visited[j] = True
+                NExp = set(kdTree.query_ball_point(X[j], r))
+                if len(NExp) >= minPts:
+                    N = N | NExp
+                            
+        # Return clustering
+        return cluster.reshape(-1,1)
