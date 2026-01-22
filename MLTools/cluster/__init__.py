@@ -1,11 +1,11 @@
 from .. import timeit 
 
-from .kMeans import kMeans
+from .KMeans import KMeans
 from .DBSCAN import DBSCAN
 from .GMM import GMM
 
 __all__ = [
-    "kMeans",
+    "KMeans",
     "DBSCAN",
     "GMM"
 ]

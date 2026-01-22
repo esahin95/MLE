@@ -21,8 +21,8 @@ class GMM:
 
         for iteration in range(maxIter):
             # E step
-            p = [mn(mean=self._mus[j], cov=self._sigmas[j]) for j in range(k)]
-            for j in range(k):
+            p = [mn(mean=self._mus[j], cov=self._sigmas[j]) for j in range(self._k)]
+            for j in range(self._k):
                 p = mn(mean=self._mus[j], cov=self._sigmas[j])
                 self._W[:,j] = p.pdf(self._X)
             self._W = self._W * self._phi
@@ -32,7 +32,7 @@ class GMM:
             # M step
             sumW = np.sum(self._W, axis=0)
             self._phi = sumW / m
-            for j in range(k):
+            for j in range(self._k):
                 self._mus[j] = (self._W[:,j] @ self._X) / sumW[j]
                 self._sigmas[j] = (self._X - self._mus[j]).T @ (self._W[:,j:j+1] * (self._X - self._mus[j])) / sumW[j]
             
