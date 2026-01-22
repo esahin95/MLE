@@ -1,6 +1,10 @@
 # match compilation directories
-__pycache__
+__pycache__/
+.vscode/
 
 # match results
-Results
+results
+
+# data
 FashionMNIST
+*.npz
