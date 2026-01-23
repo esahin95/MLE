@@ -3,8 +3,8 @@ import numpy as np
 class DataCollection:
     def __init__(self, fname=None, **kwargs):
         self.__dict__.update(**kwargs)
-        self.load(fname)
-
+        if fname:
+            self.load(fname)
         
     def load(self, fname):
         npz = np.load(fname)

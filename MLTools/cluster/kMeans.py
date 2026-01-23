@@ -9,9 +9,9 @@ class KMeans:
         self._centroids = rng.choice(X, k)
         
         oldCenters = np.zeros(len(X))
+        centers = np.zeros(len(X))
         while True:
             # new assignments
-            centers = np.zeros(len(X))
             counts = np.zeros(k)
             centroids = np.zeros_like(self._centroids)
             for i, x in enumerate(X):
@@ -38,6 +38,7 @@ class KMeans:
                 break 
             else:
                 oldCenters = centers
+        return centers
                 
     def __call__(self, X):
         distances = np.zeros((len(X), len(self._centroids)))

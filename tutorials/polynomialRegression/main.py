@@ -1,17 +1,26 @@
 # imports
 import sys
-sys.path.append("../../")
+sys.path.append("..\\..\\")
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mltools.data import DataCollection
 from mltools.utils import LogBarrier
 from mltools.linear import Ridge
 
-# load data
-data = DataCollection(fname="polynom.npz")
-n = data.X.shape[-1]
+# ground truth
+def f(X):
+    return 3*X - X**2 + 2*X**3
+
+# generate data
+rng = np.random.default_rng(0)
+m = 10
+X = rng.uniform(-1, 1, size=(m,1))
+y = f(X) + rng.normal(loc=0.0, scale=0.1, size=(m,1))
+
+# feature map
+p = 8
+Phi = np.power(X[...,np.newaxis], np.arange(1,p+1)).reshape(X.shape[0],-1)
 
 # objective
 class Objective:
@@ -52,18 +61,19 @@ class Objective:
     
     def __len__(self):
         return self._nDim
+f = Objective(Phi, y, lam=0.1)
 
 # constrained optimization    
-logB = LogBarrier(Objective(data.X, data.y, lam=0.1))
+logB = LogBarrier(f)
 logB.optimize(epochs=50, maxIter=50)
 
 # unconstrained optimization
-linR = Ridge(nFeatures=n)
-linR.fit(data.X, data.y, lam=0.1)
+linR = Ridge(nFeatures=p)
+linR.fit(Phi, y, lam=0.1)
 
 # post processing
-x = np.arange(n + 1).reshape(-1,1)
+x = np.arange(p + 1).reshape(-1,1)
 fig, ax = plt.subplots(1,1,figsize=(4,2))
-ax.scatter(x, logB.x[:n+1], s=15, color='r', marker='o')
+ax.scatter(x, logB.x[:p+1], s=15, color='r', marker='o')
 ax.scatter(x, linR.weights, s=15, color='b', marker='o')
 plt.show()

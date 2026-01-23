@@ -16,3 +16,11 @@ def timeit(f):
         print(f'func:{f.__name__!r} took: {te-ts:.6e} s')
         return rs
     return timed
+
+# cropped image
+kwfig = {
+    'format':'pdf',
+    'bbox_inches':'tight', 
+    'pad_inches':0.0, 
+    'transparent':True
+}

@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial import KDTree
 from . import timeit
 
 class DBSCAN:
