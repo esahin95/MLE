@@ -2,14 +2,12 @@
 Simple machine learning models implemented in python for the course Machine Learning for Engineers.
 
 ## Implemented models
-    - Linear predictors: Linear Regression, Halfspace Classifier, RidgeRegression
-    - Linear predictors with nonlinear transformation: Logistic Regression, Multivariate Logistic Regression
-    - Support Vector Machines
+    - Linear models: Linear Regression, Halfspace Classifier, Logistic Regression, Multivariate Logistic Regression, 
+                     RidgeRegression, Naive Bayes (Mixed), Weighted Logistic Regression
+    - Support Vector Classifier (SVC)
     - Feed-Forward Neural Networks (MLP), sigmoid activation and SGD optimizer
-    - Principal Component Analysis (PCA)
-    - Independent Component Analysis (ICA)
-    - kMeans
-    - Naive Bayes and a mixed version with real valued features
+    - Factorization: PCA, ICA
+    - Clustering: kMeans++, DBSCAN, GMM
     
     
 ## Extras

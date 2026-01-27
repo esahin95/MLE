@@ -3,7 +3,8 @@ __pycache__/
 .vscode/
 
 # match results
-results
+results/
+tmp/
 
 # data
-FashionMNIST
+data
