@@ -16,6 +16,7 @@ from utils import train, test, confusion
 
 # retrain
 retrain = False
+fname = "tmp/FashionFCN.pth"
 
 # Download training data from open datasets.
 dataTrain = datasets.FashionMNIST(
@@ -39,7 +40,7 @@ dataLoaderTrain = DataLoader(dataTrain, batch_size=bs)
 dataLoaderTest  = DataLoader(dataTest,  batch_size=bs)
 
 # Define machine learning model
-class NeuralNetwork(nn.Module):
+class FCN(nn.Module):
     def __init__(self):
         super().__init__()
         
@@ -63,7 +64,7 @@ device = torch.accelerator.current_accelerator().type if torch.accelerator.is_av
 print(f"Using {device} device")
 
 # Build model    
-model = NeuralNetwork().to(device)
+model = FCN().to(device)
 if retrain:
     # Select loss function
     criterion = nn.CrossEntropyLoss()
@@ -75,10 +76,10 @@ if retrain:
     train(model, dataLoaderTrain, criterion, optimizer, epochs=10)
 
     # Save model
-    torch.save(model.state_dict(), "tmp\\FashionFCN.pth")
+    torch.save(model.state_dict(), fname)
 else:
     # Load model
-    model.load_state_dict(torch.load("tmp\\FashionFCN.pth", weights_only=True))
+    model.load_state_dict(torch.load(fname, weights_only=True))
 print(model)
 
 # number of parameters

@@ -7,4 +7,4 @@ results/
 tmp/
 
 # data
-data
+torch/data
