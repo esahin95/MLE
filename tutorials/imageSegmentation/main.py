@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from mltools.cluster import KMeans
+from mltools import kwfig
 
 # Load image
 img = plt.imread("monarch.png")
@@ -25,10 +26,11 @@ for i in range(X.shape[0]):
 newImg = Z.reshape(img.shape)
 
 # Compare images
-fig, axs = plt.subplots(1, 2, figsize=(2*(w/h)*5, 5))
+wspace = 0.02
+fig, axs = plt.subplots(1, 2, figsize=(2*(w/h)*5/(1-wspace), 5))
 for ax, I in zip(axs, [img, newImg]):
     ax.imshow(I)
     ax.axis('off')
     ax.set_aspect('equal')
-fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0)
-plt.show()
+fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=wspace)
+plt.savefig('monarch.pdf', **kwfig)

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
 
 from mltools.cluster import GMM 
+from mltools import kwfig
 
 # ground truth
 rng = np.random.default_rng(0)
@@ -45,10 +46,14 @@ model.fit(maxIter=18)
 
 # test points
 Xm, Ym = np.meshgrid(
-    np.linspace(np.min(X[:,0]), np.max(X[:,0]), 100),
-    np.linspace(np.min(X[:,1]), np.max(X[:,1]), 100)
+    np.linspace(np.min(X[:,0]), np.max(X[:,0]), 200),
+    np.linspace(np.min(X[:,1]), np.max(X[:,1]), 200)
 )
 Pm = np.hstack((Xm.reshape(-1,1), Ym.reshape(-1,1)))
+
+# limits
+xLim = (np.floor(np.min(X[:,0])), np.ceil(np.max(X[:,0])))
+yLim = (np.floor(np.min(X[:,1])), np.ceil(np.max(X[:,1])))
 
 # compare probability density
 fig, axs = plt.subplots(1,2,figsize=(10,4))
@@ -59,3 +64,14 @@ Zm = model.predict(Pm).reshape(Xm.shape)
 axs[1].contourf(Xm, Ym, Zm)
 axs[1].scatter(X[:,0], X[:,1], c='k')
 plt.show()
+
+# save image
+w, h = xLim[1]-xLim[0], yLim[1]-yLim[0]
+fig, ax = plt.subplots(1, 1, figsize=((w/h)*5, 5))
+ax.contourf(Xm, Ym, Zm, alpha=0.8)
+ax.scatter(X[:,0], X[:,1], c='k')
+ax.axis('off')
+ax.set_xlim(xLim)
+ax.set_ylim(yLim)
+ax.set_aspect('equal')
+plt.savefig('density.pdf', **kwfig)
