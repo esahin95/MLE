@@ -8,3 +8,6 @@ tmp/
 
 # data
 torch/data
+
+# temporary scripts
+experimental
