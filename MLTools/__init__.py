@@ -17,10 +17,21 @@ def timeit(f):
         return rs
     return timed
 
+
 # cropped image
 kwfig = {
     'format':'pdf',
-    'bbox_inches':'tight', 
-    'pad_inches':0.0, 
+    'bbox_inches':'tight',
+    'pad_inches':0.0,
     'transparent':True
 }
+
+
+from . import data
+from . import ode
+from . import ann
+from . import cluster
+from . import factor
+from . import linear
+from . import svm
+from . import utils

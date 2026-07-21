@@ -1,4 +1,4 @@
-from .. import timeit 
+from .. import timeit
 
 from .KMeans import KMeans
 from .DBSCAN import DBSCAN
