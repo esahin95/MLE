@@ -1,16 +1,14 @@
-name: bones
+name: numeric
 channels:
+  - conda-forge
   - defaults
 dependencies:
-  - python=3.12
-  - spyder
-  - jupyterlab
+  - python
   - numpy
   - scipy
   - matplotlib
   - pandas
   - openpyxl
   - h5py
+  - ucimlrepo
   - pip
-  - pip:
-    - ucimlrepo
