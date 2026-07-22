@@ -1,21 +1,25 @@
 import numpy as np
 
 class ODE:
-    def integrate(self, x, tStart, tEnd, dt):
-        # number of time steps
-        maxIt = np.ceil((tEnd - tStart) / dt).astype('int')
-        
-        # allocate storage
-        X = np.zeros((maxIt, x.size))
-        
-        # time integration
-        T = tStart + np.arange(maxIt) * dt
-        for i, t in enumerate(T):
-            X[i] = x
-            x += self.RK4(x, t, dt)
-            
-        # return solution path
-        return T, X
+    def __init__(self, n):
+        self.weights = np.zeros(n)
+
+    def integrate(self, x, tEnd, dt, T=None, **kwargs):
+        B = np.linspace(0, tEnd, np.floor(tEnd/dt).astype(np.int64))
+        if T is None:
+            n = B.size
+            T = B
+        else:
+            n = T.size
+            T = np.hstack((T,B))
+        T, I = np.unique(T, return_inverse=True)
+
+        X = np.zeros_like(T) + x
+        for i in range(1, len(T)):
+            X[i] = X[i-1] + self.RK4(X[i-1], T[i-1], T[i]-T[i-1])
+
+        return X[I[:n]]
+
 
     def RK4(self, x, t, dt):
         k1 = self.rhs(x, t)

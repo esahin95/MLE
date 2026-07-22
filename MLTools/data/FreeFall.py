@@ -3,16 +3,12 @@ from ..ode.FreeFall import FreeFall as ODE
 import numpy as np
 
 class FreeFall(DataCollection):
-    def __init__(self, *args, n=20, **kwargs):
+    def __init__(self, n=20, g=9.81, **kwargs):
         rng = np.random.default_rng(0)
-        n = 20
 
         # random initial conditions
         v = rng.uniform(-0.5, 0.5, (n,1))
         h = rng.uniform( 0.1, 2.0, (n,1))
-
-        # environment
-        g = 9.81
 
         # integrate ODE
         ode = ODE(g)
