@@ -1,14 +1,10 @@
-# imports
-import sys
-sys.path.append("..\\..\\")
-
 import numpy as np
 
 from mltools.data import DataCollection
 from mltools.linear import NaiveBayes, NaiveBayesMixed
 
 # load dataset
-ds = DataCollection(fname="diagnosis.npz")
+ds = DataCollection(fname="diagnosis")
 print(ds)
 
 # training test split

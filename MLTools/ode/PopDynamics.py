@@ -10,7 +10,6 @@ class PopDynamics(ODE):
     def rhs(self, x, dt):
         return self.weights[0] * x * (1 - x /self.weights[1])
 
-
     def run(self, x, dt, T):
-        self.weights.flat = x[:2]
+        self.weights = x[:2]
         return self.integrate(x[2], max(T), dt, T)

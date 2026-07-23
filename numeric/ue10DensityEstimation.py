@@ -1,12 +1,9 @@
-# imports
-import sys
-sys.path.append("../../")
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
+import os
 
-from mltools.cluster import GMM 
+from mltools.cluster import GMM
 from mltools import kwfig
 
 # ground truth
@@ -19,10 +16,10 @@ mus = rng.normal(size=(k,d)) * 4
 sigmas = rng.normal(size=(k,d,d))
 for i in range(sigmas.shape[0]):
     sigmas[i] = sigmas[i] @ sigmas[i].T + 0.1 * np.eye(d)
-    
+
 def prob(X):
     m, d = X.shape
-    
+
     W = np.zeros((m, k))
     for j in range(k):
         p = multivariate_normal(mean=mus[j], cov=sigmas[j])
@@ -64,14 +61,3 @@ Zm = model.predict(Pm).reshape(Xm.shape)
 axs[1].contourf(Xm, Ym, Zm)
 axs[1].scatter(X[:,0], X[:,1], c='k')
 plt.show()
-
-# save image
-w, h = xLim[1]-xLim[0], yLim[1]-yLim[0]
-fig, ax = plt.subplots(1, 1, figsize=((w/h)*5, 5))
-ax.contourf(Xm, Ym, Zm, alpha=0.8)
-ax.scatter(X[:,0], X[:,1], c='k')
-ax.axis('off')
-ax.set_xlim(xLim)
-ax.set_ylim(yLim)
-ax.set_aspect('equal')
-plt.savefig('density.pdf', **kwfig)

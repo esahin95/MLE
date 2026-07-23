@@ -1,19 +1,14 @@
-# imports
-import sys
-sys.path.append("../../")
-
 import numpy as np
-import matplotlib.pyplot as plt
 
 from mltools.data import DataCollection
 from mltools.linear import MultinomialLogistic
 
 # load data
-ds = DataCollection(fname="glass.npz")
+ds = DataCollection(fname="glass")
 
 # build model
 model = MultinomialLogistic(ds.X.shape[-1], np.max(ds.y) + 1)
-model.fit(ds.X, ds.y, alp=0.001, epochs=100000)
+model.fit(ds.X, ds.y, alp=0.002, epochs=200000)
 
 # evaluate model
 C = model.confusion(ds.X,ds.y)

@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 
 from mltools.linear import Logistic, Perceptron
@@ -7,26 +6,24 @@ from mltools.data import DataCollection
 test = "Logistic"
 
 # dataset from MLE book
-data = DataCollection(fname="partFailure")
-print(data.X, data.y, sep='\n')
+ds = DataCollection(fname="partFailure")
 
 # build model
 match test:
-    case "Logistic":
+    case 'Logistic':
         model = Logistic(1)
-        model.fit(data.X, data.y, alp=1.0, epochs=10)
+        model.fit(ds.X, ds.y, alp=1.0, epochs=10)
 
-    case "Perceptron":
+    case 'Perceptron':
         model = Perceptron(1)
-        model.fit(data.X, data.y, alp=0.1, epochs=300)
+        model.fit(ds.X, ds.y, alp=0.1, epochs=300)
 
     case _:
         raise ValueError("unknown model type")
-print(model)
 
 # compare prediction
 fig, ax = plt.subplots(1, 1, figsize=(4,2))
-ax.scatter(data.X, data.y, c='b')
-ax.scatter(data.X, model(data.X), facecolors='none', edgecolors='r')
+ax.scatter(ds.X, ds.y, c='b')
+ax.scatter(ds.X, model(ds.X), facecolors='none', edgecolors='r')
 ax.set(xlabel='$T$', ylabel='Failure')
 plt.show()

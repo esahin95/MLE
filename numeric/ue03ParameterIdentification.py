@@ -4,16 +4,13 @@ import matplotlib.pyplot as plt
 
 from mltools.data import PopDynamics as Data
 from mltools.ode import PopDynamics as ODE
-from mltools.utils import NealderMead, makeFromOde
+from mltools.optim import NealderMead, makeFromOde
 
-# establish ground truth
+# ground truth
 r, K, b = 3.0, 15.0, 2.0
 ds = Data(n=10, r=r, K=K, b=b)
 T, X = ds.X, ds.y
-
-#T = np.linspace(0.5, 5.0, 10)
-#X = b / (b/K + (1 - b/K) * np.exp(-r*T))
-plt.plot(T,X,'ok')
+plt.plot(T, X, 'ok')
 
 # model objective
 Objective = makeFromOde(ODE, T, X)

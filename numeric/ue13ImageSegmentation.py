@@ -1,15 +1,11 @@
-# imports
-import sys
-sys.path.append("../../")
-
 import numpy as np
 import matplotlib.pyplot as plt
+from importlib.resources import files
 
 from mltools.cluster import KMeans
-from mltools import kwfig
 
 # Load image
-img = plt.imread("monarch.png")
+img = plt.imread(files('data') / 'monarch.png')
 img = img[:,:,:3]
 h, w, _ = img.shape
 
@@ -33,4 +29,4 @@ for ax, I in zip(axs, [img, newImg]):
     ax.axis('off')
     ax.set_aspect('equal')
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=wspace)
-plt.savefig('monarch.pdf', **kwfig)
+plt.show()

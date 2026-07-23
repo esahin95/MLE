@@ -1,7 +1,3 @@
-# imports
-import sys
-sys.path.append("..\\..\\")
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,27 +20,24 @@ xLim = (np.floor(np.min(X[:,0])), np.ceil(np.max(X[:,0])))
 yLim = (np.floor(np.min(X[:,1])), np.ceil(np.max(X[:,1])))
 w, h = xLim[1]-xLim[0], yLim[1]-yLim[0]
 
-# train unsupervised model
-model = DBSCAN()
-yPred = model.fit(X, 5, 0.08)
-
 # train supervised model
 svm = SVCSE()
 svm.fit(X, (y-0.5)*2, C=50, tol=1e-4, maxPasses=5)
 Xt,Yt = np.meshgrid(np.linspace(xLim[0],xLim[1],200), np.linspace(yLim[0],yLim[1],200))
 Pt = np.vstack((Xt.flat, Yt.flat)).T
-Zt = (svm.predict(Pt).reshape(Xt.shape) + 1) / 2  
+Zt = (svm.predict(Pt).reshape(Xt.shape) + 1) / 2
+
+# train unsupervised model
+model = DBSCAN()
+yPred = model.fit(X, 5, 0.08)
 
 # Postprocessing
-fig, ax = plt.subplots(1, 1, figsize=((w/h)*3, 3))
-ax.contourf(Xt, Yt, Zt, cmap='copper', alpha=0.3, vmin=-1, vmax=1)
-ax.scatter(X[:,0], X[:,1], c=y, s=5, cmap='copper', vmin=-1, vmax=1)
-ax.axis('off')
-ax.set_aspect('equal')
-fig.savefig('twoMoonSup.pdf', **kwfig)
-
-fig, ax = plt.subplots(1, 1, figsize=((w/h)*3, 3))
-ax.scatter(X[:,0], X[:,1], c=yPred-1, s=5, cmap='copper', vmin=-1, vmax=1)
-ax.axis('off')
-ax.set_aspect('equal')
-fig.savefig('twoMoonUnsup.pdf', **kwfig)
+fig, axs = plt.subplots(1, 2, figsize=((w/h)*6, 3))
+axs[0].contourf(Xt, Yt, Zt, cmap='copper', alpha=0.3, vmin=-1, vmax=1)
+axs[0].scatter(X[:,0], X[:,1], c=y, s=5, cmap='copper', vmin=-1, vmax=1)
+axs[0].axis('off')
+axs[0].set_aspect('equal')
+axs[1].scatter(X[:,0], X[:,1], c=yPred-1, s=5, cmap='copper', vmin=-1, vmax=1)
+axs[1].axis('off')
+axs[1].set_aspect('equal')
+plt.show()

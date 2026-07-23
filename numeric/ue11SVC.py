@@ -1,7 +1,3 @@
-# imports
-import sys
-sys.path.append("..\\..\\")
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -35,9 +31,9 @@ fig, ax = plt.subplots(1, 1, figsize=(3,3))
 P = y.flatten() > 0.0
 N = y.flatten() < 0.0
 ax.contourf(
-    Xt, Yt, np.reshape(yPred, Xt.shape), 
-    cmap='coolwarm', 
-    alpha=0.5, 
+    Xt, Yt, np.reshape(yPred, Xt.shape),
+    cmap='coolwarm',
+    alpha=0.5,
     vmin=-1.0, vmax=1.0
 )
 ax.scatter(X[P,0], X[P,1], s=5, color='r')

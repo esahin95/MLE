@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from mltools.data import DataCollection
-from mltools.utils import makeFromFun, Monomial, GaussNewton
+from mltools.optim import makeFromFun, Monomial, GaussNewton
 
 # load data
 ds = DataCollection(fname="GaussNewton")
