@@ -3,21 +3,21 @@ import os
 from importlib.resources import files
 
 class DataCollection:
-    def __init__(self, fname=None, dname=None, **kwargs):
-        self.__dict__.update(**kwargs)
-        if fname:
-            self.load(fname, dname)
+    def __init__(self, fname='tmp', dname='data', format='npz', **kwargs):
+        self.path = files(dname) / (fname + '.' + format)
 
-    def load(self, fname, dname=None):
-        if dname is None:
-            fullName = files('data') / (fname + '.npz')
+        if kwargs:
+            self.__dict__.update(**kwargs)
+            self.save()
         else:
-            fullName = os.path.join(dname, fname + '.npz')
-        npz = np.load(fullName)
+            self.load()
+
+    def load(self):
+        npz = np.load(self.path)
         self.__dict__.update(npz)
 
-    def save(self, fname):
-        np.savez(os.path.join('tmp', fname), **self.__dict__)
+    def save(self):
+        np.savez(self.path, **self.__dict__)
 
     def __repr__(self):
         return f'{self.__class__!s} containing {self.__dict__.keys()!r}'

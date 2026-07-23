@@ -6,7 +6,7 @@ from mltools.data import DataCollection
 test = "Logistic"
 
 # dataset from MLE book
-ds = DataCollection(fname="partFailure")
+ds = DataCollection(fname="partFailure", dname='data')
 
 # build model
 match test:

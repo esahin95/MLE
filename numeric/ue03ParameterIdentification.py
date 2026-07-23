@@ -7,8 +7,7 @@ from mltools.ode import PopDynamics as ODE
 from mltools.optim import NealderMead, makeFromOde
 
 # ground truth
-r, K, b = 3.0, 15.0, 2.0
-ds = Data(n=10, r=r, K=K, b=b)
+ds = Data(n=10, r=3.0, K=15.0, b=2.0)
 T, X = ds.X, ds.y
 plt.plot(T, X, 'ok')
 
@@ -22,9 +21,7 @@ x = opt(g, np.array([5.0, 5.0, 5.0]), eps=1e-8)
 
 # test the solution
 ode = ODE()
-T = np.linspace(0.0, 5.0, 100)
-X = ode.run(x, 1e-1, T)
-Y = b / (b/K + (1 - b/K) * np.exp(-r*T))
-plt.plot(T, X, 'b')
-plt.plot(T, Y, '--r')
+yPred = ode.run(x, 1e-2, ds.XTest)
+plt.plot(ds.XTest, yPred, 'b')
+plt.plot(ds.XTest, ds.yTest, '--r')
 plt.show()

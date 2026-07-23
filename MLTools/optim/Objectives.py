@@ -22,8 +22,10 @@ class Objective:
 
 
 class Monomial(Objective):
-    def __init__(self):
+    def __init__(self, *, K=0.0, r=0.0):
         super().__init__(2)
+        self.weights[0] = K
+        self.weights[1] = r
 
     def eval(self, X):
         df = np.hstack((
@@ -36,6 +38,23 @@ class Monomial(Objective):
     def __call__(self, X):
         self.inc()
         return self.weights[0] * X ** self.weights[1]
+
+
+class Polynomial(Objective):
+    def __init__(self, *, coef):
+        super().__init__(len(coef))
+        for i in range(len(coef)):
+            self.weights[i] = coef[i]
+
+    def eval(self, X):
+        return self(X), np.power(X, np.arange(4)[::-1]), None
+
+    def __call__(self, X):
+        self.inc()
+        y = self.weights[0]
+        for w in self.weights[1:]:
+            y = y * X + w
+        return y
 
 
 class LinearConstrained(Objective):

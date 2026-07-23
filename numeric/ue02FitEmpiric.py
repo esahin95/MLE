@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mltools.data import DataCollection
+from mltools.data import Monomial as Data
 from mltools.optim import makeFromFun, Monomial, GaussNewton
 
 # load data
-ds = DataCollection(fname="GaussNewton")
+ds = Data()
 
 # model
 Objective = makeFromFun(Monomial, ds.X, ds.y)

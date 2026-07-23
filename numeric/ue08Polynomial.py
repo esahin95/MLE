@@ -3,23 +3,17 @@ import matplotlib.pyplot as plt
 
 from mltools.optim import LogBarrier, LinearConstrained
 from mltools.linear import Ridge
-
-# ground truth
-def f(X):
-    return 3*X - X**2 + 2*X**3
+from mltools.data import Polynomial as Data
 
 # generate data
-rng = np.random.default_rng(0)
-m = 10
-X = rng.uniform(-1, 1, size=(m,1))
-y = f(X) + rng.normal(loc=0.0, scale=0.1, size=(m,1))
+ds = Data(coef=[2.0, -1.0, 3.0, 0.0])
 
 # feature map
 p = 8
-Phi = np.power(X[...,np.newaxis], np.arange(1,p+1)).reshape(X.shape[0],-1)
+Phi = np.power(ds.X[...,np.newaxis], np.arange(1,p+1)).reshape(ds.X.shape[0],-1)
 
 # objective
-f = LinearConstrained(Phi, y, lam=0.1)
+f = LinearConstrained(Phi, ds.y, lam=0.1)
 
 # constrained optimization
 logB = LogBarrier(f)
@@ -27,7 +21,7 @@ logB.optimize(epochs=50, maxIter=50)
 
 # unconstrained optimization
 linR = Ridge(nFeatures=p)
-linR.fit(Phi, y, lam=0.1)
+linR.fit(Phi, ds.y, lam=0.1)
 
 # post processing
 x = np.arange(p + 1).reshape(-1,1)
