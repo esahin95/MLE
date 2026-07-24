@@ -6,8 +6,7 @@ class FreeFall(ODE):
     Free fall of point mass under constant gravity
     '''
     def __init__(self, g):
-        super().__init__(1)
-        self.weights[0] = -g
+        super().__init__(-g)
 
     def run(self, x, dt):
         t = 0
@@ -20,5 +19,5 @@ class FreeFall(ODE):
 
     def rhs(self, x, t):
         y = np.roll(x, -1)
-        y[-1] = self.weights[0]
+        y[-1] = self.state()[0]
         return y

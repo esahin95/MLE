@@ -1,5 +1,5 @@
 from .DataCollection import DataCollection
-from ..ode.FreeFall import FreeFall as ODE
+from ..ode import FreeFall as ODE
 import numpy as np
 
 class FreeFall(DataCollection):

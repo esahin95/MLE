@@ -1,5 +1,5 @@
 from .DataCollection import DataCollection
-from ..optim.Objectives import Polynomial as F
+from ..optim import Polynomial as F
 import numpy as np
 
 class Polynomial(DataCollection):

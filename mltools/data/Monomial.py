@@ -1,5 +1,5 @@
 from .DataCollection import DataCollection
-from ..optim.Objectives import Monomial as F
+from ..optim import Monomial as F
 import numpy as np
 
 class Monomial(DataCollection):

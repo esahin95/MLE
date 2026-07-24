@@ -1,5 +1,5 @@
 from .DataCollection import DataCollection
-from ..ode.Pendulum import Pendulum as ODE
+from ..ode import Pendulum as ODE
 import numpy as np
 
 class Pendulum(DataCollection):

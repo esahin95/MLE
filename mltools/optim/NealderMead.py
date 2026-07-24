@@ -1,64 +1,75 @@
 import numpy as np
 from . import timeit
+from .Optimizer import Optimizer
 
-class NealderMead:
+
+class NealderMead(Optimizer):
     def __init__(self, alp=0.5, bet=2.0, gam=1.0):
+        super().__init__()
         self._alp = alp
         self._bet = bet
         self._gam = gam
 
-    def __call__(self, fun, x, eps=1e-3):
-        # initial simplex
-        n = x.size
-        S = np.eye(n+1,n) + x
-        F = [fun(s) for s in S]
+    def __step(self, f):
+        # find minimum and maximum
+        n = len(f)
+        m = np.argmax(self.__F)
+        l = np.argmin(self.__F)
 
-        for i in range(1000):
-            # find minimum and maximum
-            m = np.argmax(F)
-            l = np.argmin(F)
+        # sorted array for convenience
+        Fs = sorted(self.__F)
 
-            # sorted array for convenience
-            Fs = sorted(F)
+        # reflect on centroid
+        sm = (np.sum(self.__S, axis=0) - self.__S[m]) / n
+        xr = sm + self._gam * (sm - self.__S[m])
+        fr = f.eval(xr)
 
-            # reflect on centroid
-            sm = (np.sum(S, axis=0) - S[m]) / n
-            xr = sm + self._gam * (sm - S[m])
-            fr = fun(xr)
-
-            # case distinction
-            if fr < Fs[0]:
-                xe = sm + self._bet * (xr - sm)
-                fe = fun(xe)
-                if fe < fr:
-                    S[m] = xe
-                    F[m] = fe
-                else:
-                    S[m] = xr
-                    F[m] = fr
-
-            elif fr <= Fs[-2]:
-                S[m] = xr
-                F[m] = fr
-
+        # case distinction
+        if fr < Fs[0]:
+            xe = sm + self._bet * (xr - sm)
+            fe = f.eval(xe)
+            if fe < fr:
+                self.__S[m] = xe
+                self.__F[m] = fe
             else:
-                if fr >= Fs[-1]:
-                    xc = sm + self._alp * (S[m] - sm)
-                else:
-                    xc = sm + self._alp * (xr - sm)
+                self.__S[m] = xr
+                self.__F[m] = fr
 
-                fc = fun(xc)
-                if fc < Fs[-1]:
-                    S[m] = xc
-                    F[m] = fc
-                else:
-                    for j in range(n+1):
-                        if j == l:
-                            continue
-                        else:
-                            S[j] = 0.5 * (S[j] + S[l])
+        elif fr <= Fs[-2]:
+            self.__S[m] = xr
+            self.__F[m] = fr
 
-            # termination criteria
-            if np.std(F) < eps:
-                print(S[l], Fs[-1], fun.nEval)
-                return S[l]
+        else:
+            if fr >= Fs[-1]:
+                xc = sm + self._alp * (self.__S[m] - sm)
+            else:
+                xc = sm + self._alp * (xr - sm)
+
+            fc = f.eval(xc)
+            if fc < Fs[-1]:
+                self.__S[m] = xc
+                self.__F[m] = fc
+            else:
+                for j in range(n+1):
+                    if j == l:
+                        continue
+                    else:
+                        self.__S[j] = 0.5 * (self.__S[j] + self.__S[l])
+
+        return np.std(self.__F)
+
+
+    @timeit
+    def fit(self, f, x0=None, *, maxIter=10, eps=1e-3):
+        if x0 is not None:
+            f.set(x0)
+        n = len(f)
+
+        self.__S = np.eye(n+1,n) + f.state()
+        self.__F = [f.eval(s) for s in self.__S]
+
+        for i in range(maxIter):
+            residual = self.__step(f)
+            if residual < eps:
+                break
+        print(f'i = {i},  r = {residual:.5e}, n = {f.nEval()}')

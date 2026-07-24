@@ -1,7 +1,8 @@
 import numpy as np
 from . import timeit
+from .Optimizer import Optimizer
 
-class LogBarrier:
+class LogBarrier(Optimizer):
     def __init__(self, f):
         # reference to objective
         self._f = f
@@ -49,22 +50,21 @@ class LogBarrier:
                     raise Exception('alpha too small')
             d *= alp
             alp = min(1.0, 1.2*alp)
+            x += d
 
             # termination condition
-            x += d
             if np.linalg.norm(d, np.inf) < 1e-5:
-                #print(f'terminated at iteration {i} with alpha {alp} and residual {self(x)}')
                 return x
         raise Exception('Newton did not converge')
 
     @timeit
-    def optimize(self, epochs=50, maxIter=50):
+    def fit(self, f, x0=None, *, epochs=50, maxIter=50):
+        if x0 is None:
+            self.set(x0)
+
         self._mu = 1.0
         for epoch in range(epochs):
-            # initialize solution
             x = self.x.copy()
-
-            # Newton optimization with line search
             x = self.step(x, maxIter)
 
             # termination condition

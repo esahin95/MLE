@@ -1,5 +1,4 @@
 import numpy as np
-import os
 from importlib.resources import files
 
 class DataCollection:

@@ -1,17 +1,19 @@
 import numpy as np
 from . import timeit
+from .Optimizer import Optimizer
 
-class GaussNewton:
-    def step(self, f):
+class GaussNewton(Optimizer):
+    def __step(self, f):
         b, A, _ = f.eval()
-
-        f.weights += np.linalg.lstsq(A, b)[0].flatten()
-
+        f.add(np.linalg.lstsq(A, b)[0])
         return 0.5 * np.sum(b**2)
 
     @timeit
-    def fit(self, f, maxIter=10, eps=1e-5):
+    def fit(self, f, x0=None, *, maxIter=10, eps=1e-5):
+        if x0 is not None:
+            f.set(x0)
         for i in range(maxIter):
-            if self.step(f) < eps:
+            residual = self.__step(f)
+            if residual < eps:
                 break
         print(f'terminated at iteration {i}')

@@ -2,19 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from mltools.data import Monomial as Data
-from mltools.optim import makeFromFun, Monomial, GaussNewton
+from mltools.optim import Monomial as Objective
+from mltools.optim import GaussNewton
 
 # load data
 ds = Data()
 
 # model
-Objective = makeFromFun(Monomial, ds.X, ds.y)
-f = Objective()
+f = Objective(ds.X, ds.y)
+print(f.state())
 
 # optimization
 gs = GaussNewton()
 gs.fit(f, eps=1e-10)
-print(f.weights)
+print(f.state())
 
 # post-processing
 plt.scatter(ds.X, ds.y, color='b')
